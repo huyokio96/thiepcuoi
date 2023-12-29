@@ -6,13 +6,12 @@ import MainPage from './pages/MainPage';
 import Post from './pages/Post'
 import MainPageAnchor from './pages/MainPageAnchor';
 
-import "./assets/css/style.css";
-import "./assets/css/bootstrap.css";
-import "./assets/css/animate.css";
-import "./assets/css/icomoon.css";
-import "./assets/css/magnific-popup.css";
-// import "./assets/css/owl.carousel.min.css";
-import "./assets/css/owl.theme.default.min.css";
+// import "../public/assets/css/style.css";
+// import "../public/assets/css/bootstrap.css";
+// import "../public/assets/css/animate.css";
+// import "../public/assets/css/icomoon.css";
+// import "../public/assets/css/magnific-popup.css";
+// import "../public/assets/css/owl.theme.default.min.css";
 
 const App = () => {
   return (
