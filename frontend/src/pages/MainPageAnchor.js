@@ -16,6 +16,7 @@ import { Image } from 'antd';
 import Countdown, { zeroPad, calcTimeDelta, formatTimeDelta } from 'react-countdown';
 import Map from './MapComponent';
 import MapComponent from './MapComponent';
+import CommentSys from '../addOn/commentSys/CommentSys';
 const defaultProps = {
     center: {
         lat: 10.99835602,
@@ -285,7 +286,9 @@ const MainPageAnchor = () => {
                 <Anchor
                 style={{
                     position: 'absolute',
-                    zIndex: '9999'
+                    zIndex: '9999',
+                    // backgroundColor: 'white',
+                    // opacity: '50'
                 }}
                  direction="horizontal"
                     // replace
@@ -856,7 +859,14 @@ const MainPageAnchor = () => {
                         height: '60vh',
                         background: 'rgba(0,0,255,0.02)',
                     }}
-                >àasfsdv</div>
+                >
+                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: '100%' }} >
+                        {/* <div class="overlay"></div> */}
+                        <div class="container">
+                    <CommentSys></CommentSys>
+                    </div>
+                </div>
+                </div>
             </div>
             <ScrollToTop style={{
         // position:'relative',

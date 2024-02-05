@@ -1075,6 +1075,7 @@ form label {
 @media screen and (max-width: 768px) {
   .heart {
     margin-top: 85px;
+    z-index: 0;
   }
   .icon-heart2 {
     padding: 10px !important;
@@ -1088,6 +1089,8 @@ form label {
 @media screen and (max-width: 768px) {
   .couple-half {
     width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
 .couple-half h3 {
