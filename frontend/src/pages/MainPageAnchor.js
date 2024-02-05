@@ -307,42 +307,54 @@ const MainPageAnchor = () => {
                             key: 'part-2',
                             href: '#part-2',
                             title:
-                                <div
-                                    style={{
-                                        // fontFamily: ["Sacramento" , "Arial" , "serif"],
-                                        textTransform: "uppercase",
-                                        color: "black",
-                                        background: 'white'
-                                    }}>
                                     <a style={{
                                         textTransform: "uppercase",
-                                        color: "black",
-                                    }}>Story<strong>.</strong></a>
-                                </div>
-                            ,
+                                        color: "#F14E95",
+                                        fontFamily: 'DFVNBoris'
+                                    }}>Story</a>
                         },
                         {
                             key: 'part-3',
                             href: '#part-3',
-                            title: 'Part 3',
+                            title:  <a style={{
+                                textTransform: "uppercase",
+                                color: "#F14E95",
+                                fontFamily: 'DFVNBoris'
+                            }}>part-3</a>
                         },
                         {
                             key: 'part-4',
                             href: '#part-4',
-                            title: 'Part 4',
+                            title:  <a style={{
+                                textTransform: "uppercase",
+                                color: "#F14E95",
+                                fontFamily: 'DFVNBoris'
+                            }}>part-4</a>
                         },
                         {
                             key: 'part-5',
                             href: '#part-5',
-                            title: 'Part 5',
+                            title:  <a style={{
+                                textTransform: "uppercase",
+                                color: "#F14E95",
+                                fontFamily: 'DFVNBoris'
+                            }}>part-5</a>
                         }, {
                             key: 'part-6',
                             href: '#part-6',
-                            title: 'Part 6',
+                            title:  <a style={{
+                                textTransform: "uppercase",
+                                color: "#F14E95",
+                                fontFamily: 'DFVNBoris'
+                            }}>part-6</a>
                         }, {
                             key: 'part-7',
                             href: '#part-7',
-                            title: 'Part 7',
+                            title:  <a style={{
+                                textTransform: "uppercase",
+                                color: "#F14E95",
+                                fontFamily: 'DFVNBoris'
+                            }}>part-7</a>
                         },
                     ]}
                 />
@@ -366,7 +378,8 @@ const MainPageAnchor = () => {
                                 <div class="col-md-8 col-md-offset-2 text-center">
                                     <div class="display-t">
                                         <div class="display-tc animate-box" data-animate-effect="fadeIn">
-                                            <h1>Huydepzai &amp; Phuongdepgai</h1>
+                                            <h1>Huy &amp; Phương</h1>
+                                            <br></br>
                                             <h2>Chúng tôi sắp cứi nhau rồi~</h2>
                                             <div class="simply-countdown simply-countdown-one"></div>
                                             <Countdown
@@ -511,7 +524,7 @@ const MainPageAnchor = () => {
                 <div
                     id="part-4"
                     style={{
-                        height: '100vh',
+                        height: '140vh',
                         background: 'rgba(0,0,255,0.02)',
                     }}
                 >
@@ -786,6 +799,7 @@ const MainPageAnchor = () => {
                                     <h2>Hộp mừng cưới</h2>
                                 </div>
                             </div>
+                            <br></br>
                             <div class="row">
                                 {/* <div class="display-t">
                                     <div class="display-tc"> */}
@@ -826,7 +840,7 @@ const MainPageAnchor = () => {
 
                                             <div>Số tài khoản: XXXXX</div>
 
-                                            <div>Chi nhánh: XX</div>
+                                            <div>Chi nhánh: XXX</div>
 
                                         </div>
                                     </div>
@@ -846,7 +860,7 @@ const MainPageAnchor = () => {
             </div>
             <ScrollToTop style={{
         // position:'relative',
-        // bottom: '30px'
+        paddingTop: '6px'
     }} smooth />
         {/* </Row> */}
         </>
