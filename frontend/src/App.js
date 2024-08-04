@@ -5,6 +5,7 @@ import CreatePost from './pages/CreatePost';
 import MainPage from './pages/MainPage';
 import Post from './pages/Post'
 import MainPageAnchor from './pages/MainPageAnchor';
+import registerServiceWorker from './registerServiceWorker';
 
 // import "../public/assets/css/style.css";
 // import "../public/assets/css/bootstrap.css";
@@ -14,6 +15,8 @@ import MainPageAnchor from './pages/MainPageAnchor';
 // import "../public/assets/css/owl.theme.default.min.css";
 
 const App = () => {
+  registerServiceWorker();
+
   return (
     <div>
       {/* <div className="navbar">
@@ -23,7 +26,6 @@ const App = () => {
         </div>
      
       </div> */}
-    
 
     <Router>
       <Route path="/" exact render={(props) => <MainPageAnchor />} />

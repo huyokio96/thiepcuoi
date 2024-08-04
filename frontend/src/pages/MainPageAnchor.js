@@ -1,9 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { Anchor, Col, Modal, Row } from 'antd';
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import Slider from "react-slick";
+import { Anchor, Modal, Tabs, Carousel as Carousel1 } from 'antd';
 import '../App.css'
 import './MainPageAnchor.css'
 import './revealScroll.css'
 import ScrollToTop from "react-scroll-to-top";
+import { stagger, useAnimate, animate } from "framer-motion";
+import AudioPlayer from 'react-h5-audio-player';
+import 'react-h5-audio-player/lib/styles.css';
+import Gallery from "react-photo-gallery";
+import ResponsiveGallery from "react-responsive-gallery";
+import Carousel, { Modal as Modal1, ModalGateway } from "react-images";
+import PhotoAlbum from "react-photo-album";
+import styled from 'styled-components';
+import { Link } from 'react-router-dom';
+import * as FaIcons from 'react-icons/fa';
+import * as AiIcons from 'react-icons/ai';
+import { IconContext } from 'react-icons/lib';
 // import bg from "../../public/assets/images/img_bg_1.jpg";
 // import bg2 from "../../public/assets/images/img_bg_2.jpg";
 // import bg3 from "../../public/assets/images/img_bg_3.jpg";
@@ -13,17 +26,49 @@ import ScrollToTop from "react-scroll-to-top";
 // import cp2 from "../../public/assets/images/couple-2.jpg";
 // import cp3 from "../../public/assets/images/couple-3.jpg";
 import { Image } from 'antd';
-import Countdown, { zeroPad, calcTimeDelta, formatTimeDelta } from 'react-countdown';
-import Map from './MapComponent';
-import MapComponent from './MapComponent';
+import Countdown, { zeroPad } from 'react-countdown';
 import CommentSys from '../addOn/commentSys/CommentSys';
-const defaultProps = {
-    center: {
-        lat: 10.99835602,
-        lng: 77.01502627
+import base, { providers, auth } from './base' //dependency injection
+import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import AOS from 'aos';
+import 'aos/dist/aos.css'; // You can also use <link> for styles
+
+const photos = [
+    { src: "../assets/images/cauhon1.jpg" },
+    { src: "../assets/images/cauhon2.jpg" },
+];
+const photos1 = [
+    {
+        src: "../assets/images/bienho1.jpg",
+        width: 4,
+        height: 3,
     },
-    zoom: 11
-};
+    {
+        src: "../assets/images/damngo1.jpg",
+        width: 1,
+        height: 1
+    },
+    {
+        src: "../assets/images/damngo2.jpg",
+        width: 4,
+        height: 3
+    },
+    {
+        src: "../assets/images/dichoi1.jpg",
+        width: 4,
+        height: 3
+    },
+    {
+        src: "../assets/images/dichoi2.jpg",
+        width: 1,
+        height: 1
+    },
+    {
+        src: "../assets/images/HAQ_0186.jpg",
+        width: 5,
+        height: 3
+    }
+];
 const renderer = ({ days, hours, minutes, seconds, completed }) => {
     if (completed) {
         // Render a completed state
@@ -33,10 +78,6 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
         // const days = hours / 24;
         return <div style={{ margin: '30px' }}>
             <span style={{ display: 'inline' }}>
-                {/* <a style={{ backgroundColor: 'pink', padding: 20, borderRadius: '69px' }}>{zeroPad(days)}</a>:
-                <a style={{ backgroundColor: 'pink', padding: 20, borderRadius: '69px' }}>{zeroPad(hours)}</a>:
-                <a style={{ backgroundColor: 'pink', padding: 20, borderRadius: '69px' }}>{zeroPad(minutes)}</a>:
-                <a style={{ backgroundColor: 'pink', padding: 20, borderRadius: '69px' }}>{zeroPad(seconds)}</a> */}
                 <section class="stage">
                     <figure class="ball bubble" style={{ padding: "22px", fontSize: '34px', backgroundColor: '#F14E95', marginRight: '22px' }}>
                         <div>{zeroPad(days)}</div>
@@ -66,200 +107,134 @@ const renderer = ({ days, hours, minutes, seconds, completed }) => {
     }
 };
 
+const rendererd = ({ days, hours, minutes, seconds, completed }) => {
+    if (completed) {
+        return <a>winner</a>;
+    } else {
+        return <span>
+            {days}
+        </span>;
+    }
+};
+
+const contentStyle = {
+    margin: 0,
+    height: '160px',
+    color: '#fff',
+    lineHeight: '160px',
+    textAlign: 'center',
+    background: '#364d79',
+};
+
+const rendererhour = ({ days, hours, minutes, seconds, completed }) => {
+    if (completed) {
+        return <a>winner</a>;
+    } else {
+        return <span>
+            {hours}
+        </span>;
+    }
+};
+
+const renderermn = ({ days, hours, minutes, seconds, completed }) => {
+    if (completed) {
+        return <a>winner</a>;
+    } else {
+        return <span>
+            {minutes}
+        </span>;
+    }
+};
+
+const renderersd = ({ days, hours, minutes, seconds, completed }) => {
+    if (completed) {
+        return <a>winner</a>;
+    } else {
+        return <span>
+            {seconds}
+        </span>;
+    }
+};
+
+
+
 const MainPageAnchor = () => {
-    const [isIntersecting, setIsIntersecting] = useState(false);
-    const ref = useRef(null);
-    const [open, setOpen] = useState(false);
+    AOS.init();
+    const [currentImage, setCurrentImage] = useState(0);
+    const [viewerIsOpen, setViewerIsOpen] = useState(false);
 
+    const [showElement1, setShowElement1] = useState(true);
+    const [showElement2, setShowElement2] = useState(false);
+    const [showElement3, setShowElement3] = useState(false);
+    const [showElement4, setShowElement4] = useState(false);
+
+    const [nav1, setNav1] = useState(null);
+    const [nav2, setNav2] = useState(null);
+    let sliderRef1 = useRef(null);
+    let sliderRef2 = useRef(null);
+
+    const [nav3, setNav3] = useState(null);
+    const [nav4, setNav4] = useState(null);
+    let sliderRef3 = useRef(null);
+    let sliderRef4 = useRef(null);
+
+    const [nav5, setNav5] = useState(null);
+    const [nav6, setNav6] = useState(null);
+    let sliderRef5 = useRef(null);
+    let sliderRef6 = useRef(null);
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsIntersecting(entry.isIntersecting);
-            },
-            { rootMargin: "-50px" }
-        );
-        console.log(isIntersecting);
-        observer.observe(ref.current);
+        setNav1(sliderRef1);
+        setNav2(sliderRef2);
+        setNav3(sliderRef3);
+        setNav4(sliderRef4);
+        setNav5(sliderRef5);
+        setNav6(sliderRef6);
+        setTimeout(function () {
+            setShowElement1(false);
+        }, 15000);
 
-        return () => observer.disconnect();
-    }, [isIntersecting]);
+        setTimeout(function () {
+            setShowElement2(true);
+            setTimeout(function () {
+                setShowElement2(false);
+                setShowElement3(true);
+                setTimeout(function () {
+                    setShowElement3(false);
+                    setShowElement4(true);
+                    setTimeout(function () {
+                        setShowElement4(false);
+                        setOpen(!open)
+                    }, 3000);
+                }, 3000);
+            }, 3000);
+        }, 3000);
 
+    }, []);
 
-    useEffect(() => {
-        if (isIntersecting) {
-            ref.current.querySelectorAll("#left").forEach((el) => {
-                el.classList.remove("slide-out");
-                el.classList.add("slide-in");
-            });
-            ref.current.querySelectorAll("#right").forEach((el) => {
-                el.classList.remove("slide-out2");
-                el.classList.add("slide-in2");
-            });
-            ref.current.querySelectorAll(`.fh5co-heading`).forEach((el) => {
-                el.classList.remove("slide-up");
-                el.classList.add("slide-down");
-            });
-            console.log(1);
-        } else {
-            ref.current.querySelectorAll("#left").forEach((el) => {
-                el.classList.remove("slide-in");
-                el.classList.add("slide-out");
-            });
-            ref.current.querySelectorAll("#right").forEach((el) => {
-                el.classList.remove("slide-in2");
-                el.classList.add("slide-out2");
-            });
-            ref.current.querySelectorAll(`.fh5co-heading`).forEach((el) => {
-                el.classList.remove("slide-down");
-                el.classList.add("slide-up");
-            });
-            console.log(2);
-        }
-    }, [isIntersecting]);
+    const openLightbox = useCallback((event, { photo, index }) => {
+        setCurrentImage(index);
+        setViewerIsOpen(true);
+    }, []);
 
-    const [isIntersecting2, setIsIntersecting2] = useState(false);
-    const ref2 = useRef(null);
+    const closeLightbox = () => {
+        setCurrentImage(0);
+        setViewerIsOpen(false);
+    };
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsIntersecting2(entry.isIntersecting);
-            },
-            { rootMargin: "-50px" }
-        );
-        observer.observe(ref2.current);
+    const randomNumberBetween = (min, max) => {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    };
 
-        return () => observer.disconnect();
-    }, [isIntersecting2]);
+    const [scope, animate] = useAnimate();
 
 
-    useEffect(() => {
-        if (isIntersecting2) {
-            ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-                el.classList.remove("slide-out");
-                el.classList.add("slide-in");
-            });
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-out2");
-            //     el.classList.add("slide-in2");
-            // });
-            // ref2.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-up");
-            //     el.classList.add("slide-down");
-            // });
-            console.log(1);
-        } else {
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            // el.classList.remove("slide-in");
-            // el.classList.add("slide-out");
-            // });
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-in2");
-            //     el.classList.add("slide-out2");
-            // });
-            // ref2.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-down");
-            //     el.classList.add("slide-up");
-            // });
-            console.log(2);
-        }
-    }, [isIntersecting2]);
 
-    const [isIntersecting3, setIsIntersecting3] = useState(false);
-    const ref3 = useRef(null);
+    const [open, setOpen] = useState(true);
+    const [openDonate, setOpenDonate] = useState(false);
+    const [openMap1, setOpenMap1] = useState(false);
+    const [openMap2, setOpenMap2] = useState(false);
+    const [openGallery, setOpenGallery] = useState(false);
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsIntersecting3(entry.isIntersecting);
-            },
-            { rootMargin: "-50px" }
-        );
-        observer.observe(ref3.current);
-
-        return () => observer.disconnect();
-    }, [isIntersecting3]);
-
-
-    useEffect(() => {
-        if (isIntersecting3) {
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-out");
-            //     el.classList.add("slide-in");
-            // });
-            ref3.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-                el.classList.remove("slide-out2");
-                el.classList.add("slide-in2");
-            });
-            // ref3.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-up");
-            //     el.classList.add("slide-down");
-            // });
-            console.log(1);
-        } else {
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-in");
-            //     el.classList.add("slide-out");
-            // });
-            // ref3.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-in2");
-            //     el.classList.add("slide-out2");
-            // });
-            // ref3.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-down");
-            //     el.classList.add("slide-up");
-            // });
-            console.log(2);
-        }
-    }, [isIntersecting3]);
-
-    const [isIntersecting4, setIsIntersecting4] = useState(false);
-    const ref4 = useRef(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsIntersecting4(entry.isIntersecting);
-            },
-            { rootMargin: "-50px" }
-        );
-        observer.observe(ref4.current);
-
-        return () => observer.disconnect();
-    }, [isIntersecting4]);
-
-
-    useEffect(() => {
-        if (isIntersecting4) {
-            ref4.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-                el.classList.remove("slide-out");
-                el.classList.add("slide-in");
-            });
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-out2");
-            //     el.classList.add("slide-in2");
-            // });
-            // ref4.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-up");
-            //     el.classList.add("slide-down");
-            // });
-            console.log(1);
-        } else {
-            // ref4.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-in");
-            //     el.classList.add("slide-out");
-            // });
-            // ref2.current.querySelectorAll(".timeline-badge, .timeline-panel").forEach((el) => {
-            //     el.classList.remove("slide-in2");
-            //     el.classList.add("slide-out2");
-            // });
-            // ref4.current.querySelectorAll(`.timeline-badge, .timeline-panel`).forEach((el) => {
-            //     el.classList.remove("slide-down");
-            //     el.classList.add("slide-up");
-            // });
-            console.log(2);
-        }
-    }, [isIntersecting4]);
 
     const scrollContainer = document.querySelectorAll(".scrollmenu");
 
@@ -267,612 +242,1223 @@ const MainPageAnchor = () => {
     (scrollContainer) && scrollContainer.forEach((el) => {
         el.addEventListener("wheel", (evt) => {
             evt.preventDefault();
-            el.scrollLeft += evt.deltaY  * -0.01;
+            el.scrollLeft += evt.deltaY * -0.01;
         });
     });
 
-    const parentContainerWidth = document.querySelector(".scrollmenu")?.offsetWidth;
-    let elementCount = Array.prototype.filter.call(document.querySelectorAll('#image'), (node) => {
-        console.log(node)
-        return node.offsetLeft >= parentContainerWidth ?? 0;
-    });
-    console.log(elementCount)
+    const [openMenu, setOpenMenu] = useState(false);
+
+    const items = [
+        {
+            key: '1',
+            label: 'Đính hôn',
+            children: <>
+                <Image.PreviewGroup
+                    preview={{
+                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                    }}
+                >
+                    <Image
+                        width={'100%'}
+                        height={'100%'}
+                        src="../assets/images/HAQ_0261.jpg"
+                    />
+                    <Image
+                        width={'50%'}
+                        src="../assets/images/HAQ_0488.jpg"
+                    />
+                    <Image
+                        width={'50%'}
+                        src="../assets/images/HAQ_0165.jpg"
+                    />
+                    <Image
+                        width={'30%'}
+                        src="../assets/images/HAQ_0395.jpg"
+                    /></Image.PreviewGroup>
+            </>,
+        },
+        {
+            key: '2',
+            label: 'Pre-Wedding',
+            children: <>
+                <Image.PreviewGroup
+                    preview={{
+                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                    }}
+                >
+                    <Image
+                        width={'50%'}
+                        height={'100%'}
+                        src="../assets/images/HAQ_0261.jpg"
+                    />
+                    <Image
+                        width={'50%'}
+                        src="../assets/images/HAQ_0172.jpg"
+                    />
+                    <Image
+                        width={'40%'}
+                        src="../assets/images/HAQ_0224.jpg"
+                    />
+                    <Image
+                        width={'30%'}
+                        src="../assets/images/HAQ_0304.jpg"
+                    /></Image.PreviewGroup>
+            </>,
+        },
+        {
+            key: '3',
+            label: 'Lễ gia tiên',
+            children: <>
+                <Image.PreviewGroup
+                    preview={{
+                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                    }}
+                >
+                    <Image
+                        width={'30%'}
+                        height={'100%'}
+                        src="../assets/images/HAQ_0304.jpg"
+                    />
+                    <Image
+                        width={'50%'}
+                        src="../assets/images/HAQ_0565.jpg"
+                    />
+                    <Image
+                        width={'90%'}
+                        src="../assets/images/hinhdep1.jpg"
+                    />
+                    <Image
+                        width={'60%'}
+                        src="../assets/images/dichoi2.jpg"
+                    /></Image.PreviewGroup>
+            </>,
+        },
+
+    ];
 
     return (
         <>
-   
-        {/* <Col span={4}> */}
-        <div>
-                <Anchor
-                style={{
-                    position: 'absolute',
-                    zIndex: '9999',
-                    // backgroundColor: 'white',
-                    // opacity: '50'
-                }}
-                 direction="horizontal"
-                    // replace
-                    items={[
-                        {
-                            key: 'part-1',
-                            href: '#part-1',
-                            title:
-                                <div
-                                    style={{
-                                        fontFamily: ["Sacramento", "Arial", "serif"],
-                                        fontSize: "40px"
-                                    }}>
-                                    <a>Wedding<strong>.</strong></a>
-                                </div>
-                            ,
-                        },
-                        {
-                            key: 'part-2',
-                            href: '#part-2',
-                            title:
-                                    <a style={{
-                                        textTransform: "uppercase",
-                                        color: "#F14E95",
-                                        fontFamily: 'DFVNBoris'
-                                    }}>Story</a>
-                        },
-                        {
-                            key: 'part-3',
-                            href: '#part-3',
-                            title:  <a style={{
-                                textTransform: "uppercase",
-                                color: "#F14E95",
-                                fontFamily: 'DFVNBoris'
-                            }}>part-3</a>
-                        },
-                        {
-                            key: 'part-4',
-                            href: '#part-4',
-                            title:  <a style={{
-                                textTransform: "uppercase",
-                                color: "#F14E95",
-                                fontFamily: 'DFVNBoris'
-                            }}>part-4</a>
-                        },
-                        {
-                            key: 'part-5',
-                            href: '#part-5',
-                            title:  <a style={{
-                                textTransform: "uppercase",
-                                color: "#F14E95",
-                                fontFamily: 'DFVNBoris'
-                            }}>part-5</a>
-                        }, {
-                            key: 'part-6',
-                            href: '#part-6',
-                            title:  <a style={{
-                                textTransform: "uppercase",
-                                color: "#F14E95",
-                                fontFamily: 'DFVNBoris'
-                            }}>part-6</a>
-                        }, {
-                            key: 'part-7',
-                            href: '#part-7',
-                            title:  <a style={{
-                                textTransform: "uppercase",
-                                color: "#F14E95",
-                                fontFamily: 'DFVNBoris'
-                            }}>part-7</a>
-                        },
-                    ]}
-                />
+            <nav class="navbar bg-white shadow-sm py-1" style={{
+                height: '29px',
+                borderRadius: '0px',
+                position: 'fixed',
+                zIndex: 1039,
+                boxShadow: '1px 9px 22px rgb(8 11 0 / 0.2) !important',
+                maxWidth: 'none',
+                minHeight: '27px',
+                height: '48px'
+            }}>
+                <div class="container-fluid">
+                    <div class="w-100 d-flex align-items-center justify-content-between">
+                        <a class="section-title navbar-brand" href="#">H &amp; P</a>
+                        <button class="navbar-toggler rounded-0 border-0 p-0" onClick={() => setOpenMenu(!openMenu)} type="button">
+                            <i class="">
+                                <img style={{
+                                    width: '29px',
+                                    height: '27px',
+                                    marginTop: '-11px'
+                                }} class="access-icon" src="../assets/images/MenuBlack.png" alt="" />
+                            </i>
+                        </button>
+                    </div>
                 </div>
-            {/* </Col> */}
-        {/* <Row> */}
-            <div className='App'>
+            </nav>
+            <div class="offcanvas-backdrop fade show" onClick={() => setOpenMenu(!openMenu)}
+                style={!openMenu ? {
+                    transition: 'opacity .3s ease-in-out',
+                    opacity: 0,
+                    left: '9999px',
+                    transition: 'left .3s ease-in-out',
+                } : {
+                    opacity: 0.5,
+                    left: '0px',
+                    transition: 'left .3s ease-in-out',
+                    transition: 'opacity .3s ease-in-out',
+                }}
+            ></div>
+            <div class="offcanvas-end offcanvas-menu"
+                style={!openMenu ? {
+                    width: '189px',
+                    height: 'fit-content',
+                    position: 'fixed',
+                    right: '-999px',
+                    zIndex: '2000',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxWidth: '100%',
+                    backgroundColor: 'rgb(255 255 255)',
+                    backgroundClip: 'padding-box',
+                    outline: 0,
+                    transition: 'right .3s linear',
+                } : {
+                    width: '189px',
+                    height: 'fit-content',
+                    position: 'fixed',
+                    right: '0px',
+                    zIndex: '2000',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxWidth: '100%',
+                    backgroundColor: 'rgb(255 255 255)',
+                    backgroundClip: 'padding-box',
+                    outline: 0,
+                    opacity: 1,
+                    transition: 'right .3s linear',
+                }}
+                tabindex="-1" data-bs-scroll="true" data-bs-backdrop="true" aria-labelledby="offcanvasNavbarLabel" aria-modal="true" role="dialog">
+                <div class="offcanvas-body" style={{
+                    paddingLeft: '20px',
+                    paddingRight: '20px',
+                }}>
+                    <ul class="navbar-nav justify-content-end flex-grow-1">
+                        <div style={{
+                            paddingRight: '27px',
+                            marginTop: '14px'
+                        }} class="offcanvas-header justify-content-end">
+                            <button type="button" class="navbar-toggler rounded-0 border-0 p-0" onClick={() => setOpenMenu(!openMenu)} aria-label="">
+                                <i class="">
+                                    <img style={{
+                                        width: '29px',
+                                        height: '27px',
+                                        marginTop: '-11px'
+                                    }} class="access-icon" src="../assets/images/MenuBlack.png" alt="" />
+                                </i>
+                            </button>
+                        </div>
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link active" aria-current="page" href="#video">Video cưới</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link active" aria-current="page" href="#part-5-4">Album Hình Cưới</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link active" aria-current="page" href="#story">The Love Story</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link active" aria-current="page" href="#invitation">Lời ngỏ</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link" href="#event">Sự Kiện Cưới</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link" href="#couple">Cô Dâu &amp; Chú Rể</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link" href="#part-8">Lời chúc</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+
+
+            </div>
+            <div className='App' data-aos-easing="ease" data-aos-duration="400" data-aos-delay="0">
                 <div
                     id="part-1"
                     style={{
+                        paddingTop: '40px',
                         height: '100vh',
                         background: 'rgba(255,0,0,0.02)',
                     }}
                     className='wrapper'
                 >
-                    <div id="fh5co-header" class="fh5co-cover fixed-bg" role="banner"
-                        style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }} data-stellar-background-ratio="0.5">
-                        <div class="overlay"></div>
-                        <div class="container">
-                            <div class="row">
-                                <div class="col-md-8 col-md-offset-2 text-center">
-                                    <div class="display-t">
-                                        <div class="display-tc animate-box" data-animate-effect="fadeIn">
-                                            <h1>Huy &amp; Phương</h1>
-                                            <br></br>
-                                            <h2>Chúng tôi sắp cứi nhau rồi~</h2>
-                                            <div class="simply-countdown simply-countdown-one"></div>
-                                            <Countdown
-                                                date='2024-01-27T00:00:00'
-                                                renderer={renderer}
-                                                daysInHours={true}
-                                            />
-                                            <p><a href="google.com" class="btn btn-default btn-sm">Save the date</a></p>
+
+                    <section class="banner-section">
+                        <div class="main_area p-3">
+                            <div class="day_wrapper aos-init aos-animate" data-aos="fade-up" data-aos-delay="500">
+                                <div class="day_area p-1 text-center">
+                                    <div class="section-sub-title d-flex day_area_inner text-center p-2 py-3">
+                                        <p class="m-0 we"> We're</p>
+                                        <div class="wrap-text">
+                                            <p class="day m-0">10</p>
+                                            <p class="month m-0">11</p>
                                         </div>
+                                        <p class="m-0">Getting Married</p>
                                     </div>
                                 </div>
                             </div>
+                            <div class="main_image_area pt-4 pb-8 aos-init aos-animate" data-aos="fade-up" data-aos-delay="50">
+                                <div class="main_image">
+                                    <img src="../assets/images/HAQ_0224.jpg" />
+                                </div>
+                                <img class="bg-title" src="https://hungandtram.iwedding.info/templates/template135/img/main_title.png" alt="" />
+                                <div class="wrap-name pt-7 px-5 title" style={{ marginTop: '-20%' }}>
+                                    Huy <small>&amp;</small> Phương
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </section>
+
                 </div>
                 <div
                     id="part-2"
                     style={{
-                        height: '70vh',
-                        background: 'rgba(0,255,0,0.02)',
-                    }}
 
+                        background: 'rgba(255,0,0,0.02)',
+                    }}
+                    className='wrapper'
                 >
-                    {/* <div className='scroll-bg'></div> */}
-                    <div id="fh5co-header" class="fh5co-cover fixed-bg" role="banner"
-                        // style={{ backgroundImage: `url(${bg2})` }} 
-                        style={{ backgroundColor: "rgb(255 193 193)", height: '70vh' }}
-                        data-stellar-background-ratio="0.5">
-                        <div id="fh5co-couple" ref={ref}>
-                            <div class="container">
-                                <div class="row">
-                                    <div class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
-                                        <h2>Xin chào!</h2>
-                                        <h3>Sài gòn, 1 Tháng 1, 2024</h3>
-                                        <p style={{ color: 'white' }}>Trân trọng mời bạn đến chơi dứ chúng tôi</p>
-                                    </div>
+
+                    <section class="py-4 accessibilities-section">
+                        <div class="container-fluid">
+                            <div class="row gx-2 justify-content-center">
+                                <div class="col-sm-4">
+                                    <a href="#part-7" class="w-100 mb-1 px-2 accessibility-btn btn btn-secondary aos-init aos-animate" data-aos="fade-right">
+                                        <span class="content-button">
+                                            <img class="access-section-icon" src="https://cdn.biihappy.com/ziiweb/images/static/common/wishes.png" alt="access-btn" /> Gửi lời chúc
+                                        </span>
+                                    </a>
                                 </div>
-                                <div class="couple-wrap animate-box">
-                                    <div class="couple-half" id="left">
-                                        <div class="groom">
-                                            <img src={'../assets/images/img_bg_1.jpg'} alt="groom" class="img-responsive" />
-                                        </div>
-                                        <div class="desc-groom">
-                                            <h3>huydepzai</h3>
-                                            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove</p>
-                                        </div>
-                                    </div>
-                                    <p class="heart text-center"><i class="icon-heart2"></i></p>
-                                    <div class="couple-half" id="right">
-                                        <div class="bride">
-                                            <img src={'../assets/images/img_bg_1.jpg'} alt="groom" class="img-responsive" />
-                                        </div>
-                                        <div class="desc-bride">
-                                            <h3>Phươngdepgai</h3>
-                                            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove</p>
-                                        </div>
-                                    </div>
+                                <div class="col-sm-4">
+                                    <a onClick={() => setOpenDonate(true)} style={{ color: 'white' }} class="w-100 mb-1 accessibility-btn btn btn-secondary buttonDonate aos-init aos-animate" data-aos="fade-left">
+                                        <span class="content-button">
+                                            <img class="access-section-icon" src="https://cdn.biihappy.com/ziiweb/images/static/common/money_bag.png" alt="access-btn" /> Mừng cưới
+                                        </span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+
+
                 </div>
                 <div
                     id="part-3"
                     style={{
-                        height: '130vh',
-                        background: 'rgba(0,0,255,0.02)',
+                        background: 'rgba(255,0,0,0.02)',
                     }}
+                    className='wrapper'
                 >
-                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_3.jpg)`, height: '100%' }} >
-                        <div class="overlay"></div>
-                        <div class="container">
-                            <div class="row" style={{ paddingTop: '70px' }}>
-                                <div class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
-                                    <span>Our Special Events</span>
-                                    <h2>Wedding Events</h2>
-                                </div>
-                            </div>
-                            <div class="row">
-                                {/* <div class="display-t">
-                                    <div class="display-tc"> */}
-                                <div class="col-md-10 col-md-offset-1">
-                                    <div class="col-md-6 col-sm-6 text-center">
-                                        <div class="event-wrap animate-box">
-                                            <h3>Main Ceremony</h3>
-                                            <div class="event-col">
-                                                <i class="icon-clock"></i>
-                                                <span>4:00 PM</span>
-                                                <span>6:00 PM</span>
-                                            </div>
-                                            <div class="event-col">
-                                                <i class="icon-calendar"></i>
-                                                <span>Monday 28</span>
-                                                <span>November, 2016</span>
-                                            </div>
-                                            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-sm-6 text-center">
-                                        <div class="event-wrap animate-box">
-                                            <h3>Wedding Party</h3>
-                                            <div class="event-col">
-                                                <i class="icon-clock"></i>
-                                                <span>7:00 PM</span>
-                                                <span>12:00 AM</span>
-                                            </div>
-                                            <div class="event-col">
-                                                <i class="icon-calendar"></i>
-                                                <span>Monday 28</span>
-                                                <span>November, 2016</span>
-                                            </div>
-                                            <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                                        </div>
-                                    </div>
-                                    {/* </div>
-                                    </div> */}
-                                </div>
-                            </div>
-                            <div class="row">
-
-                                <div class="col-md-10 col-md-offset-1">
-
-                                    <div style={{
-                                        // left: '29px',
-                                        height: '30vh',
-                                        width: '96%',
-                                        position: 'absolute',
-                                        border: '2px solid #C8CACC',
-                                        marginTop: '20px'
-                                    }}>
-                                        <MapComponent
-                                        >
-                                        </MapComponent>
-                                    </div>
-
-                                </div>
-
+                    <section class="py-5 video-section section-bg-affect" id="video">
+                        <div class="container-fluid">
+                            <h2 class="section-title text-center aos-init aos-animate" data-aos="fade-up">
+                                Video cưới
+                            </h2>
+                            <h3 class="section-sub-title mb-4 text-center aos-init aos-animate" data-aos="fade-up">
+                                There is so much happiness that we shared together.
+                            </h3>
+                            <div class="ratio ratio-16x9 aos-init aos-animate" data-aos="zoom-in">
+                                <iframe width="100%" src="https://www.youtube.com/embed/wqAgycAWVd4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
                             </div>
                         </div>
-                    </div>
+                    </section>
+
                 </div>
                 <div
                     id="part-4"
                     style={{
-                        height: '140vh',
-                        background: 'rgba(0,0,255,0.02)',
+                        background: 'rgba(255,0,0,0.02)',
                     }}
+                    className='wrapper'
                 >
-                    <div id="fh5co-couple-story">
-                        <div class="container">
-                            <div class="row" style={{ paddingTop: '70px' }}>
-                                <div class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
-                                    <span>We Love Each Other</span>
-                                    <h2>Our Story</h2>
-                                    <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
+                    <section class="py-5 section-sub-title weddingdate-section section-bg-affect" id="weddingdate">
+                        <div class="container-fluid">
+                            <div class="w-100">
+                                <div class="mini_calendar m-auto pb-3 aos-init aos-animate" data-aos="fade-up-right">
+                                    <div class="mini_calendar">
+                                        <table> <caption class="calendar-month">Tháng 11 /  2024</caption> </table>
+                                        <table>
+                                            <tbody><tr><th abbr="Monday">Thứ 2</th><th abbr="Tuesday">Thứ 3</th><th abbr="Wednesday">Thứ 4</th><th abbr="Thursday">Thứ 5</th><th abbr="Friday">Thứ 6</th><th abbr="Saturday">Thứ 7</th><th abbr="Sunday">CN</th></tr>
+                                                <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>1</td><td>2</td><td>3</td></tr>
+                                                <tr><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td><div id="today">10</div></td></tr>
+                                                <tr><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td></tr>
+                                                <tr><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td><td>24</td></tr>
+                                                <tr><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12 col-md-offset-0" >
-                                    <ul class="timeline animate-box">
-                                        <li class="animate-box" ref={ref2}>
-                                            {/* <div id='ab1'> */}
-                                            <div class="timeline-badge slide-out" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}></div>
-                                            <div class="timeline-panel slide-out">
-                                                <div class="timeline-heading">
-                                                    <h3 class="timeline-title">First We Meet</h3>
-                                                    <span class="date">December 25, 2015</span>
-                                                </div>
-                                                <div class="timeline-body">
-                                                    <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                                                    <Image.PreviewGroup
-                                                        preview={{
-                                                            onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-                                                        }}
-                                                    >
-                                                        <div className='scrollmenu' id="style-3">
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image id='image'
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                        </div>
-                                                    </Image.PreviewGroup>
-                                                </div>
-                                            </div>
-                                            {/* </div> */}
-                                        </li>
-                                        <li class="timeline-inverted animate-box" ref={ref3}>
-                                            {/* <div id='ab2'> */}
-                                            <div class="timeline-badge slide-out2" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}></div>
-                                            <div class="timeline-panel slide-out2">
-                                                <div class="timeline-heading">
-                                                    <h3 class="timeline-title">First Date</h3>
-                                                    <span class="date">December 28, 2015</span>
-                                                </div>
-                                                <div class="timeline-body">
-                                                    <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                                                    <Image.PreviewGroup
-                                                        preview={{
-                                                            onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-                                                        }}
-                                                    >
-                                                        <div className='scrollmenu' id="style-3">
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                            <Image width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                            <Image
-                                                                width={50}
-                                                                src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                            />
-                                                        </div>
-                                                    </Image.PreviewGroup>
-                                                </div>
-                                            </div>
-                                            {/* </div> */}
-                                        </li>
-                                        <li class="animate-box" ref={ref4}>
-                                            {/* <div id='ab3'> */}
-                                            <div class="timeline-badge slide-out" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}></div>
-                                            <div class="timeline-panel slide-out">
-                                                <div class="timeline-heading">
-                                                    <h3 class="timeline-title">In A Relationship</h3>
-                                                    <span class="date">January 1, 2016</span>
-                                                </div>
-                                                <div class="timeline-body">
-                                                    <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-                                                </div>
-                                            </div>
-                                            {/* </div> */}
-                                        </li>
-                                    </ul>
+                                <div class="countdown aos-init aos-animate" data-aos="fade-up-left">
+                                    <div class="m-auto" id="clock" data-date="2024-06-09" data-text-day="Ngày" data-text-hour="Giờ" data-text-minute="Phút" data-text-second="Giây">
+                                        <div class="box"><div> <Countdown
+                                            date='2024-11-10T00:00:00'
+                                            renderer={rendererd}
+                                            daysInHours={true}
+                                        /></div> <span>Ngày</span></div><div class="box"><div><Countdown
+                                            date='2024-11-10T00:00:00'
+                                            renderer={rendererhour}
+                                            daysInHours={true}
+                                        /></div> <span>Giờ</span> </div><div class="box"><div><Countdown
+                                            date='2024-11-10T00:00:00'
+                                            renderer={renderermn}
+                                            daysInHours={true}
+                                        /></div> <span>Phút</span> </div><div class="box"><div><Countdown
+                                            date='2024-11-10T00:00:00'
+                                            renderer={renderersd}
+                                            daysInHours={true}
+                                        /></div> <span>Giây</span></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+
                 </div>
                 <div
                     id="part-5"
                     style={{
-                        height: '170vh',
-                        background: 'rgba(0,0,255,0.02)',
+                        background: 'rgba(255,0,0,0.02)',
                     }}
+                    className='wrapper'
                 >
-                    <div id="fh5co-gallery" class="fh5co-section-gray">
-                        <div class="container">
-                            <div class="row" style={{ paddingTop: '70px' }}>
-                                <div class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
-                                    <span>Our Memories</span>
-                                    <h2>Wedding Gallery</h2>
-                                    <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-                                </div>
-                            </div>
-                            <div class="row row-bottom-padded-md">
-                                <div class="col-md-12">
-                                    <ul id="fh5co-gallery-list">
+                    <section class="py-5 story-section section-bg-affect" id="story">
+                        <div class="container-fluid">
+                            <h2 data-aos="fade-up" class="section-title text-center aos-init aos-animate">
+                                The Love Story
+                            </h2>
+                            <h3 data-aos="fade-up" class="section-sub-title mb-4 text-center aos-init aos-animate">
+                                Love you to the moon and back
+                            </h3>
+                            <div class="story-content">
+                                <div class="timeline">
+                                    <div class="outer">
+                                        <div class="timeline-card aos-init aos-animate" data-aos="fade-right">
+                                            <div class="info">
+                                                <span class="date">Aug 06 2022</span>
+                                                <h3 class="title">Sự kì diệu của nhân duyên</h3>
+                                                <p>
+                                                    Bạn có tin vào sự kì diệu của định mệnh?<br />
+                                                    Chỉ một tin nhắn vu vơ ngày hôm đó, lại dẫn lối hai con người xa lạ trở thành vợ chồng ngày hôm nay.<br />
+                                                    Tháng 8/2022 khi Hùng về Việt Nam thăm gia đình. <br />
+                                                    Ban đầu chỉ là nhờ cô gái Sài Gòn ấy giới thiệu cho vài quán ăn ngon, nhưng không ngờ, Hùng bị thu hút bởi Trâm ngay từ lần đầu gặp mặt. Cô gái nhỏ bé, một mình tự lập ở Sài Gòn đất chật người đông, sao mà giống với hình ảnh của anh khi vừa đi du học 10 năm về trước.<br />
+                                                    Hai mảnh ghép đồng điệu gặp nhau, hai con người xa lạ dần trở nên thân thiết và là động lực cùng nhau vượt qua thử thách mỗi ngày trong cuộc sống.
+                                                </p>
+                                                <div class="img-holder">
 
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a onClick={() => setOpen(true)}>
-                                                <div class="case-studies-summary">
-                                                    <span>14 Photos</span>
-                                                    <h2>Two Glas of Juice</h2>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-2">
-                                                <div class="case-studies-summary">
-                                                    <span>30 Photos</span>
-                                                    <h2>Timer starts now!</h2>
-                                                </div>
-                                            </a>
-                                        </li>
+                                                    <div className="slider-container">
+                                                        <Slider arrows={false} asNavFor={nav2} ref={slider => (sliderRef1 = slider)}>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/dichoi2.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/dichoi2.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                        <Slider
+                                                            className='oke1'
+                                                            asNavFor={nav1}
+                                                            ref={slider => (sliderRef2 = slider)}
+                                                            slidesToShow={8}
+                                                            swipeToSlide={true}
+                                                            focusOnSelect={true}
+                                                            style={{
+                                                                padding: '13px', marginTop: '-10px',
+                                                                backgroundColor: '#333333'
+                                                            }}
+                                                        >
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                    </div>
 
 
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-3">
-                                                <div class="case-studies-summary">
-                                                    <span>90 Photos</span>
-                                                    <h2>Beautiful sunset</h2>
                                                 </div>
-                                            </a>
-                                        </li>
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-4">
-                                                <div class="case-studies-summary">
-                                                    <span>12 Photos</span>
-                                                    <h2>Company's Conference Room</h2>
+                                                {/* <Image.PreviewGroup
+                                                    preview={{
+                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                                                    }}
+                                                >
+                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
+                                                        <Image id='image' width={50} src={'../assets/images/img_bg_1.jpg'} />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                    </div>
+                                                </Image.PreviewGroup> */}
+                                            </div>
+                                        </div>
+                                        <div class="timeline-card aos-init aos-animate" data-aos="fade-left">
+                                            <div class="info">
+                                                <span class="date">Apr 26 2023</span>
+                                                <h3 class="title">She Say Yes</h3>
+                                                <p>
+                                                    Yêu một người cách mình nửa vòng trái đất là một trải nghiệm không hề dễ. Nhưng mọi sự nỗ lực của Hùng và Trâm đã được đền đáp xứng đáng.<br />
+                                                    26 tháng 04 năm 2023. Buổi chiều hoàng hôn Seoul đã chứng kiến một lời hứa bên nhau trọn đời ♥️
+                                                </p>
+                                                <div class="img-holder">
+                                                    <div className="slider-container">
+                                                        <Slider arrows={false} asNavFor={nav4} ref={slider => (sliderRef3 = slider)}>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/cauhon2.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/dichoi2.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                        <Slider
+                                                            className='oke1'
+                                                            asNavFor={nav3}
+                                                            ref={slider => (sliderRef4 = slider)}
+                                                            slidesToShow={8}
+                                                            swipeToSlide={true}
+                                                            focusOnSelect={true}
+                                                            style={{
+                                                                padding: '13px', marginTop: '-10px',
+                                                                backgroundColor: '#333333'
+                                                            }}
+                                                        >
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                    </div>
                                                 </div>
-                                            </a>
-                                        </li>
+                                                {/* <Image.PreviewGroup
+                                                    preview={{
+                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                                                    }}
+                                                >
+                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
+                                                        <Image id='image' width={50} src={'../assets/images/cauhon2.jpg'} />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                    </div>
+                                                </Image.PreviewGroup> */}
+                                            </div>
+                                        </div>
+                                        <div class="timeline-card aos-init aos-animate" data-aos="fade-right">
+                                            <div class="info">
+                                                <span class="date">Jun 01 2024</span>
+                                                <h3 class="title">We Do</h3>
+                                                <p>
+                                                    Finally, vượt qua bao thử thách. Tụi mình cưới rồi!
+                                                </p>
+                                                <div class="img-holder">
+                                                    <div className="slider-container">
+                                                        <Slider arrows={false} asNavFor={nav6} ref={slider => (sliderRef5 = slider)}>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/HAQ_0261.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image id='image' src={'../assets/images/dichoi2.jpg'} />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <Image src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                        <Slider
+                                                            className='oke1'
+                                                            asNavFor={nav5}
+                                                            ref={slider => (sliderRef6 = slider)}
+                                                            slidesToShow={8}
+                                                            swipeToSlide={true}
+                                                            focusOnSelect={true}
+                                                            style={{
+                                                                padding: '13px', marginTop: '-10px',
+                                                                backgroundColor: '#333333'
+                                                            }}
+                                                        >
+                                                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                <img src={'../assets/images/HAQ_0261.jpg'} alt="" />
+                                                            </div>
+                                                            <div style={{ display: 'flex', justifyContent: 'center' }}>
 
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-3">
-                                                <div class="case-studies-summary">
-                                                    <span>50 Photos</span>
-                                                    <h2>Useful baskets</h2>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/img_bg_1.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/cauhon2.jpg'} alt="" />
+                                                            </div>
+                                                            <div>
+                                                                <img src={'../assets/images/dichoi2.jpg'} alt="" />
+                                                            </div>
+                                                        </Slider>
+                                                    </div>
                                                 </div>
-                                            </a>
-                                        </li>
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-4">
-                                                <div class="case-studies-summary">
-                                                    <span>45 Photos</span>
-                                                    <h2>Skater man in the road</h2>
-                                                </div>
-                                            </a>
-                                        </li>
-
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-4">
-                                                <div class="case-studies-summary">
-                                                    <span>35 Photos</span>
-                                                    <h2>Two Glas of Juice</h2>
-                                                </div>
-                                            </a>
-                                        </li>
-
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-5">
-                                                <div class="case-studies-summary">
-                                                    <span>90 Photos</span>
-                                                    <h2>Timer starts now!</h2>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <li class="one-third animate-box" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)` }}>
-                                            <a href="#" class="color-6">
-                                                <div class="case-studies-summary">
-                                                    <span>56 Photos</span>
-                                                    <h2>Beautiful sunset</h2>
-                                                </div>
-                                            </a>
-                                        </li>
-                                    </ul>
+                                                {/* <img src={'../assets/images/HAQ_0261.jpg'} alt="" />
+                                                </div> */}
+                                                {/* <Image.PreviewGroup
+                                                    preview={{
+                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                                                    }}
+                                                >
+                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
+                                                        <Image id='image' width={50} src={'../assets/images/img_bg_1.jpg'} />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
+                                                        <Image id='image'
+                                                            width={50}
+                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
+                                                        />
+                                                    </div>
+                                                </Image.PreviewGroup> */}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <Modal
-                        title="Modal 1000px width"
-                        centered
-                        open={open}
-                        onOk={() => setOpen(false)}
-                        onCancel={() => setOpen(false)}
-                        width={1000}
-                    >
-                        <p>some contents...</p>
-                        <p>some contents...</p>
-                        <p>some contents...</p>
-                    </Modal>
+                    </section>
                 </div>
                 <div
-                    id="part-6"
+                    id="part-5-1"
                     style={{
-                        height: '100vh',
-                        background: 'rgba(0,0,255,0.02)',
+                        // height: '170vh',
+                        background: 'rgba(255,0,0,0.02)',
                     }}
+                    className='wrapper'
                 >
-                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: '100%' }} >
-                        <div class="overlay"></div>
-                        <div class="container">
-                            <div class="row" style={{ paddingTop: '30px' }}>
-                                <div style={{ marginBottom: '0' }} class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
-                                    <Image
-                                    preview={false}
-                                        width={140}
-                                        src={'../assets/images/sec-title-flower.png'}
-                                    />
-                                    <h2>Hộp mừng cưới</h2>
+                    <section class="py-5 invitation-section section-bg-affect" id="invitation">
+                        <div class="container-fluid">
+                            <div class="w-100">
+                                <div data-aos="fade-up" class="invation-title aos-init aos-animate">
+                                    <h3 class="text-center title m-0">Lời ngỏ</h3>
+                                    <p class="text-center m-0">
+
+                                    </p>
                                 </div>
-                            </div>
-                            <br></br>
-                            <div class="row">
-                                {/* <div class="display-t">
-                                    <div class="display-tc"> */}
-                                <div class="col-md-10 col-md-offset-1">
-                                    <div class="col-md-6 col-sm-6 text-center">
-                                        <div class="event-wrap animate-box"
-                                            style={{
-                                                backgroundColor: 'white',
-                                                border: '4px solid #C89D9C',
-                                                color: 'black'
-                                            }}>
-                                            <h3 style={{ color: 'black' }}>Mừng cưới đến chú rể</h3>
-                                            <div class="">
-                                                <Image width={200} src={`https://i0.wp.com/www.cssscript.com/wp-content/uploads/2018/03/qrcode-parser.png?fit=377%2C346&ssl=1`}></Image>
-                                            </div>
-                                            <div>Ngân hàng: XXX</div>
-                                            <div>Tên tài khoản: XXXX</div>
-
-                                            <div>Số tài khoản: XXXXX</div>
-
-                                            <div>Chi nhánh: XX</div>
-
-                                        </div>
+                                <div>
+                                    <div data-aos="fade-up" class="invitation-content my-5 text-center sub-title aos-init aos-animate">
+                                        Cảm ơn mọi người đã click vào thiệp cưới online của chúng mình.<br />
+                                        Nơi đây sẽ là những thông tin và hình ảnh của chúng mình cho ngày cưới.<br />
+                                        Chúng mình mong nhận được lời chúc phúc từ người thân/bạn bè xa gần để đám cưới của tụi mình được diễn ra cách tốt đẹp nhất.<br />
+                                        Cô dâu &amp; chú rể xin cảm ơn.
                                     </div>
-                                    <div class="col-md-6 col-sm-6 text-center">
-                                        <div class="event-wrap animate-box"
-                                            style={{
-                                                backgroundColor: 'white',
-                                                border: '4px solid #C89D9C',
-                                                color: 'black'
-                                            }}>
-                                            <h3 style={{ color: 'black' }}>Mừng cưới đến cô dâu</h3>
-                                            <div class="">
-                                                <Image width={200} src={`https://i0.wp.com/www.cssscript.com/wp-content/uploads/2018/03/qrcode-parser.png?fit=377%2C346&ssl=1`}></Image>
-                                            </div>
-                                            <div>Ngân hàng: XXX</div>
-                                            <div>Tên tài khoản: XXXX</div>
-
-                                            <div>Số tài khoản: XXXXX</div>
-
-                                            <div>Chi nhánh: XXX</div>
-
-                                        </div>
+                                    <div data-aos="fade-up" class="couple-img mb-5 aos-init aos-animate">
+                                        <img src={'../assets/images/dichoi1.jpg'} />
+                                    </div>
+                                    <div data-aos="fade-up" class="section-title invitation-couple text-center my-5 fs-4 aos-init">
+                                        <p>*Groom/<span> Đ. Huy</span></p>
+                                        <p>*Bride/<span> H. Phương</span></p>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
-                    </div>
+                    </section>
                 </div>
+                <div
+                    id="part-5-2"
+                    style={{
+                        // height: '170vh',
+                        background: 'rgba(255,0,0,0.02)',
+                    }}
+                    className='wrapper'
+                >
+                    <section class="py-5 event-section section-bg-affect" id="event">
+                        <div class="container-fluid">
+                            <h2 data-aos="fade-up" class="section-title text-center aos-init aos-animate">
+                                Sự Kiện Cưới
+                            </h2>
+                            <h3 data-aos="fade-up" class="section-sub-title mb-4 text-center aos-init aos-animate">
+                                Cảm ơn bạn rất nhiều vì đã gửi những lời chúc mừng tốt đẹp nhất đến đám cưới của chúng tôi!
+                            </h3>
+                            <div data-aos="flip-right" class="event-item d-flex flex-row p-0 border-0 rounded overflow-hidden aos-init aos-animate">
+                                <div class="image-wrap position-relative" style={{ backgroundImage: `url('../assets/images/HAQ_9756.jpg')`, backgroundPositionY: 'top' }}>
+                                    <div class="dresscode-colors-wrap w-100">
+                                        <div class="dresscode-colors-event">
+                                            <span class="tooltip-dresscode">Dress Code</span>
+                                            <div class="dresscode-colors-item" style={{ background: '#000000' }}></div>
+                                            <div class="dresscode-colors-item" style={{ background: '#ffffff' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-wrap p-3" style={{ margin: 'auto' }}>
+                                    <h5 class="section-sub-title1">TIỆC CƯỚI NHÀ NỮ</h5>
+                                    <strong>11:00 10/11/2024</strong>
+                                    <p class="card-text">
+                                        Biên Hòa
+                                    </p>
+                                    <div class="calendar-button" style={{ display: 'none' }}>
+                                    </div>
+                                    <a style={{ color: 'white', }} onClick={() => setOpenMap1(true)} target="_blank" class="section-sub-title btn btn-sm btn-secondary">Xem bản đồ</a>
+                                </div>
+                            </div>
+                            <Modal
+                                centered
+                                open={openMap1}
+                                onCancel={() => setOpenMap1(false)}
+                                cancelText='Đóng'
+                                okButtonProps={{ style: { display: 'none' } }}
+
+                                closable={false}
+                            >
+
+                                <div id="fh5co-event" class="fh5co-bg" >
+                                    <div class="container">
+                                        <div class="row" style={{ paddingTop: '30px' }}>
+                                            {/* <iframe
+                                                // width="450"
+                                                // height="250"
+                                                frameborder="0" style={{ border: '0' }}
+                                                referrerpolicy="no-referrer-when-downgrade"
+                                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAI9kPkskayYti5ttrZL_UfBlL3OkMEbvs&q=Eiffel+Tower,Paris+France"
+                                                allowfullscreen>
+                                            </iframe> */}
+                                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1131.0919335055453!2d106.82789927843949!3d11.038189467964758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174dd5f8a50e57f%3A0x41b0350eff395f3e!2zTmjDs20gdHLhursgVGh1IE5ndXnhu4d0!5e0!3m2!1svi!2s!4v1722595312266!5m2!1svi!2s" width="600" height="450" style={{ border: '0' }} allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </Modal>
+                            <div data-aos="flip-left" class="event-item d-flex flex-row p-0 border-0 rounded overflow-hidden aos-init aos-animate">
+                                <div class="image-wrap position-relative" style={{ backgroundImage: `url('../assets/images/hinhdep1.jpg')` }}>
+                                    <div class="dresscode-colors-wrap w-100">
+                                        <div class="dresscode-colors-event">
+                                            <span class="tooltip-dresscode">Dress Code</span>
+                                            <div class="dresscode-colors-item" style={{ background: '#000000' }}></div>
+                                            <div class="dresscode-colors-item" style={{ background: '#ffffff' }}></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-wrap p-3" style={{ margin: 'auto' }}>
+                                    <h5 class="section-sub-title1">TIỆC CƯỚI NHÀ NAM</h5>
+                                    <strong>11:00 17/11/2024</strong>
+                                    <p class="card-text">
+                                        Pleiku City
+                                    </p>
+                                    <div class="calendar-button" style={{ display: 'none' }}>
+                                    </div>
+                                    <a style={{ color: 'white', }} onClick={() => setOpenMap2(true)} target="_blank" class="section-sub-title btn btn-sm btn-secondary">Xem bản đồ</a>
+                                </div>
+                            </div>
+
+                            <Modal
+                                centered
+                                open={openMap2}
+                                onCancel={() => setOpenMap2(false)}
+                                cancelText='Đóng'
+                                okButtonProps={{ style: { display: 'none' } }}
+
+                                closable={false}
+                            >
+
+                                <div id="fh5co-event" class="fh5co-bg" >
+                                    <div class="container">
+                                        <div class="row" style={{ paddingTop: '30px' }}>
+                                            {/* <iframe
+                                                width="450"
+                                                height="250"
+                                                frameborder="0" style={{ border: '0' }}
+                                                referrerpolicy="no-referrer-when-downgrade"
+                                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAI9kPkskayYti5ttrZL_UfBlL3OkMEbvs&q=Eiffel+Tower,Paris+France"
+                                                allowfullscreen>
+                                            </iframe> */}
+                                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d967.9434481121325!2d107.99724697520953!3d13.972065884429554!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x316c1f7fb7bfaaa3%3A0x726024d0dad57943!2zMTEwIFF1eeG6v3QgVGnhur9uLCBQLiBEacOqbiBI4buTbmcsIFRow6BuaCBwaOG7kSBQbGVpa3UsIEdpYSBMYWkgNjAwMDAwLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1722595189308!5m2!1svi!2s" width="600" height="450" style={{ border: '0' }} allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </Modal>
+                        </div>
+                    </section>
+                </div>
+                <div
+                    id="part-5-3"
+                    style={{
+                        background: 'rgba(255,0,0,0.02)',
+                    }}
+                    className='wrapper'
+                >
+                    <section class="py-5 couple-section section-bg-affect" id="couple">
+                        <div class="container-fluid">
+                            <h2 data-aos="fade-up" class="section-title text-center m-0 aos-init aos-animate">
+                                Cô Dâu &amp; Chú Rể
+                            </h2>
+
+                            <div class="section-title wrap-people mt-5">
+                                <div class="member member-groom mb-5">
+                                    <div data-aos="flip-left" class="member-image animation mb-3 text-center aos-init aos-animate">
+                                        <img src="../assets/images/hinhdep1.jpg" />
+                                    </div>
+                                    <div class="groom-story d-flex flex-column">
+                                        <p class="text-story fs-6 text-center m-0">
+                                            Simple man with simple pleasures
+
+                                        </p>
+                                    </div>
+                                    <div class="d-flex justify-content-center">
+                                        <span data-aos="fade-left" class="member-name m-0 aos-init aos-animate">
+                                            Đ. Huy /
+                                        </span>
+                                        <ul data-aos="fade-up" class="member-contact social-links d-flex p-0 m-0 mx-2 aos-init aos-animate">
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="member member-bride mt-5">
+                                    <div data-aos="flip-right" class="member-image animation mb-3 text-center aos-init">
+                                        <img src='../assets/images/HAQ_9756.jpg' />
+                                    </div>
+
+                                    <div class="bride-story d-flex flex-column">
+                                        <p class="text-story fs-6 text-center m-0">
+                                            👰🏻&zwj;♀️💍
+                                        </p>
+                                    </div>
+                                    <div class="d-flex justify-content-center">
+                                        <span data-aos="fade-left" class="member-name m-0 aos-init">
+                                            H. Phương /
+                                        </span>
+                                        <ul data-aos="fade-up" class="member-contact social-links d-flex p-0 m-0 mx-2 aos-init">
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <div
+                    id="part-5-4"
+                    style={{
+                        background: 'rgba(255,0,0,0.02)',
+                    }}
+                    className='wrapper'
+                >
+
+                    <h2 class="section-title text-center aos-init aos-animate" data-aos="zoom-in-up">
+                        Album Hình Cưới
+                    </h2>
+                    <Image.PreviewGroup
+                        preview={{
+                            onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
+                        }}
+                    >
+                        <Image
+                            data-aos="zoom-in-up"
+                            width={'60%'}
+                            height={'100%'}
+                            src="../assets/images/HAQ_0261.jpg"
+                        />
+                        <Image
+                            data-aos="fade-left"
+                            style={{
+                                position: 'relative',
+                                top: '-60px'
+                            }}
+                            width={'40%'}
+                            height={'100%'}
+
+                            src="../assets/images/HAQ_0165.jpg"
+                        />
+                        <Image
+                            data-aos="fade-right"
+                            style={{
+                                position: 'relative',
+                                top: '-70px'
+                            }}
+                            width={'50%'}
+                            src="../assets/images/HAQ_0488.jpg"
+                        />
+                        <Image
+                            data-aos="fade-left"
+                            width={'50%'}
+                            src="../assets/images/HAQ_0395.jpg"
+                        />
+                        <Image
+                            data-aos="fade-up"
+
+                            width={'70%'}
+                            src="../assets/images/HAQ_0249.jpg"
+                        />
+                    </Image.PreviewGroup>
+                    {/* <Gallery photos={photos1} id="#gallery"
+                        onClick={openLightbox}
+                    />
+                    <ModalGateway>
+                        {viewerIsOpen ? (
+                            <Modal1 onClose={closeLightbox}>
+                                <Carousel
+                                    currentIndex={currentImage}
+                                    views={photos1.map(x => ({
+                                        ...x,
+                                        srcset: x.srcSet,
+                                        caption: x.title,
+                                    }))}
+                                />
+                            </Modal1>
+                        ) : null}
+                    </ModalGateway> */}
+                    <div class="text-center aos-init aos-animate" data-aos="fade-up">
+                        <a style={{ color: 'white', padding: '10px !important', marginBottom: '50px !important' }} onClick={() => setOpenGallery(true)} id="btn-see-more-gallery" class="btn btn-secondary btn-see-more-gallery">
+                            <span> Tất cả hình ảnh </span>
+                        </a>
+                        <Modal
+                            centered
+                            open={openGallery}
+                            onCancel={() => setOpenGallery(false)}
+                            cancelText='Đóng'
+                            style={{ marginTop: '20px' }}
+                            okButtonProps={{ style: { display: 'none' } }}
+                            closable={false}
+                        >
+                            <Tabs style={{ overflowY: 'auto' }} defaultActiveKey="1" items={items} />
+
+                        </Modal>
+                    </div>
+
+                    <Modal
+                        centered
+                        open={openDonate}
+                        onCancel={() => setOpenDonate(false)}
+                        cancelText='Đóng'
+                        okButtonProps={{ style: { display: 'none' } }}
+
+                        closable={false}
+                    >
+
+                        <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: 'unset' }} >
+                            <div class="overlay"></div>
+                            <div class="container">
+                                <div class="row" style={{ paddingTop: '30px' }}>
+                                    <div style={{ marginBottom: '0' }} class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
+                                        <Image
+                                            preview={false}
+                                            width={140}
+                                            src={'../assets/images/sec-title-flower.png'}
+                                        />
+                                        <h2>Hộp mừng cưới</h2>
+                                    </div>
+                                </div>
+                                <br></br>
+                                <div class="row">
+
+                                    <div class="col-md-10 col-md-offset-1">
+                                        <div class="col-md-6 col-sm-6 text-center">
+                                            <div class="event-wrap animate-box"
+                                                style={{
+                                                    backgroundColor: 'white',
+                                                    border: '4px solid #C89D9C',
+                                                    color: 'black'
+                                                }}>
+                                                <h3 style={{ color: 'black' }}>Mừng cưới đến chú rể</h3>
+                                                <div class="">
+                                                    <Image width={200} src={`https://i0.wp.com/www.cssscript.com/wp-content/uploads/2018/03/qrcode-parser.png?fit=377%2C346&ssl=1`}></Image>
+                                                </div>
+                                                <div>Ngân hàng: XXX</div>
+                                                <div>Tên tài khoản: XXXX</div>
+
+                                                <div>Số tài khoản: XXXXX</div>
+
+                                                <div>Chi nhánh: XX</div>
+
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 col-sm-6 text-center">
+                                            <div class="event-wrap animate-box"
+                                                style={{
+                                                    backgroundColor: 'white',
+                                                    border: '4px solid #C89D9C',
+                                                    color: 'black'
+                                                }}>
+                                                <h3 style={{ color: 'black' }}>Mừng cưới đến cô dâu</h3>
+                                                <div class="">
+                                                    <Image width={200} src={`https://i0.wp.com/www.cssscript.com/wp-content/uploads/2018/03/qrcode-parser.png?fit=377%2C346&ssl=1`}></Image>
+                                                </div>
+                                                <div>Ngân hàng: XXX</div>
+                                                <div>Tên tài khoản: XXXX</div>
+
+                                                <div>Số tài khoản: XXXXX</div>
+
+                                                <div>Chi nhánh: XXX</div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </Modal>
+                </div>
+
                 <div
                     id="part-7"
                     style={{
-                        height: '60vh',
-                        background: 'rgba(0,0,255,0.02)',
+
+                        background: 'rgba(255,0,0,0.02)',
                     }}
+                    className='wrapper'
                 >
-                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: '100%' }} >
-                        {/* <div class="overlay"></div> */}
+                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: '100%', paddingTop: '50px', paddingBottom: '20px' }} >
+                        <div class="overlay-dark"></div>
                         <div class="container">
-                    <CommentSys></CommentSys>
+                            <div style={{ marginBottom: '0', paddingLeft: '0px', paddingRight: '0px' }} class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
+                                <CommentSys base={base} auth={auth} providers={providers} />
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div
+                    id="part-8"
+                    style={{
+
+                        background: 'rgba(255,0,0,0.02)',
+                    }}
+                    className='wrapper'
+                >
+                    <section class="section-title footer-section py-5 text-center section-bg-affect">
+                        <div class="container-fluid">
+                            <h3 class="title">Thank you!</h3>
+                            <h5 class="sub-title">--  Đ. Huy &amp;  H. Phương --</h5>
+                        </div>
+                    </section>
                 </div>
             </div>
-            <ScrollToTop style={{
-        // position:'relative',
-        paddingTop: '6px'
-    }} smooth />
-        {/* </Row> */}
+
+            <div class="btn-menu-open shake" style={{
+                position: 'fixed',
+                bottom: '29px',
+                left: '20px',
+            }}>
+                <a href="javascript:void(0)" class="text-white buttonDonate  aos-init aos-animate" >
+
+                    <span class="content-button tooltipBtn">
+                        {showElement1 ? <span class="tooltiptext2 showToolTip">Click vào đây nếu bạn muốn phát nhạc!</span> : <span class="tooltiptext1">Nhạc nền</span>}
+
+                        <AudioPlayer
+                            style={{
+                                width: '41px',
+                                position: 'fixed',
+                                opacity: '0'
+                            }}
+                            src="../assets/audio/MotDoi.mp3"
+                            customVolumeControls={[]}
+                            autoPlay={false}
+                            loop={true}
+                            showJumpControls={false}
+                            showFilledProgress={false}
+                            layout='horizontal-reverse'
+                            title='âfsfs'
+                            header={<p style={{ fontSize: '20px' }}>Click vào đây nếu bạn muốn phát nhạc!</p>}
+                        />
+                        <img style={{
+                            width: '23px',
+                            height: '18px',
+                            marginTop: '8px',
+                            marginLeft: '8px'
+                        }} class="access-icon" src="../assets/images/soundPNG.png" alt="" />
+                    </span>
+                </a>
+            </div>
+            <div id="menu-access" class="">
+                <div class="btn-menu-open shake" onClick={() => setOpen(!open)}>
+                    <img style={{
+                        marginLeft: '3px',
+                        marginTop: '7px'
+                    }} class="access-icon" src="../assets/images/menuBar.png" alt="" />
+                </div>
+                <ul class="p-0 m-0 list-menu-icon" style={{ opacity: 1 }} hidden={!open}>
+                    <li class="text-center shake">
+                        <a href="#part-7" class="text-white">
+                            <span class="content-button tooltipBtn">
+                                {showElement2 ? <span class="tooltiptext showToolTip">Gửi lời chúc</span> : <span class="tooltiptext">Gửi lời chúc</span>}
+                                <img class="access-icon" src="https://cdn.biihappy.com/ziiweb/images/static/common/wishes.png" alt="" />
+                            </span>
+                        </a>
+                    </li>
+
+                    <li class="text-center shake">
+                        <a onClick={() => setOpenDonate(true)} class="text-white buttonDonate" data-aos="fade-left">
+                            <span class="content-button tooltipBtn">
+                                {showElement3 ? <span class="tooltiptext showToolTip">Mừng cưới</span> : <span class="tooltiptext">Mừng cưới</span>}
+
+                                <img class="access-icon" src="https://cdn.biihappy.com/ziiweb/images/static/common/money_bag.png" alt="" />
+                            </span>
+                        </a>
+                    </li>
+
+                    <li class="text-center shake">
+                        <a href="#" class="text-white buttonDonate aos-init aos-animate">
+                            <span class="content-button tooltipBtn">
+                                {showElement4 ? <span class="tooltiptext showToolTip">lên đầu trang</span> : <span class="tooltiptext">lên đầu trang</span>}
+
+                                <img class="access-icon" src="../assets/images/up-128.png" alt="" />
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+
+            </div>
         </>
     )
 };

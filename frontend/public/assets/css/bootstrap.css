@@ -3791,7 +3791,7 @@ tbody.collapse.in {
     background-image: none;
   }
 }
-@media (min-width: 768px) {
+/* @media (min-width: 768px) {
   .navbar-nav {
     float: left;
     margin: 0;
@@ -3803,7 +3803,7 @@ tbody.collapse.in {
     padding-top: 17.5px;
     padding-bottom: 17.5px;
   }
-}
+} */
 
 .navbar-form {
   margin-left: -15px;
