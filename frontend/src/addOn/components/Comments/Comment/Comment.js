@@ -36,28 +36,24 @@ export default class Comment extends Component {
     }
     render() {
         return (
-            <div class="box-comment pb-3" style={{textAlign: 'left'}}>
-            <h4 id="user-name-comment" style={{fontSize:'17px'}} class="mt-1">{this.props.comment.user?.name}</h4>
-                  <p style={{fontSize:'13px', color:'rgb(87 76 76)'}} id="comment-detail" class="m-0">
-                  {this.props.comment.comment}
-                  </p>
-                  <button style={{position: 'relative',
-    bottom: '55px'}}  type="button" onClick={() => this.deleteComment(this.props.id)} className="close" aria-label="Close">
+            <div class="commentCssChild" style={{textAlign: 'left'}}>
+                <div class="comment1">
+                <button style={{    position: 'relative',
+    bottom: '17px',
+    left: '11px',}}  type="button" onClick={() => this.deleteComment(this.props.id)} className="close" aria-label="Close">
                         <span style={{color: 'black'}} aria-hidden="true">x</span>
                     </button>
+                <p style={{fontSize:'14px', color:'rgb(87 76 76)'}} id="comment-detail" class="m-0">
+                  {this.props.comment.comment}
+                  </p>
+                </div>
+                <div class="comment2">
+            <div class="nameComment">{this.props.comment.user?.name}</div>
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" version="1.1" viewBox="0 0 16 16" focusable="false" class="chakra-icon css-1kxx4bz" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 10c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5l0.016 0.5c0 3.866-3.134 7-7 7v-2c1.336 0 2.591-0.52 3.536-1.464 0.182-0.182 0.348-0.375 0.497-0.578-0.179 0.028-0.362 0.043-0.549 0.043zM3.5 10c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5l0.016 0.5c0 3.866-3.134 7-7 7v-2c1.336 0 2.591-0.52 3.536-1.464 0.182-0.182 0.348-0.375 0.497-0.578-0.179 0.028-0.362 0.043-0.549 0.043z"></path></svg>
+                </div>
+                 
+                 
             </div>
-            // <div className="card">
-            //     <span className="card-body" style={{color: 'black'}}>
-            //         <span style={{marginRight: 10, color: 'black'}}>{this.props.comment.user.name}:</span>
-            //         <span style={{ marginLeft: 0, color: 'black', fontSize: 'small', fontWeight: 'lighter' }}>
-            //             {this.props.comment.comment}
-            //         </span>
-            //         <button  type="button" onClick={() => this.deleteComment(this.props.id)} className="close" aria-label="Close">
-            //             <span style={{color: 'black'}} aria-hidden="true">x</span>
-            //         </button>
-            //     </span>
-            // </div>
-
         )
     }
 }

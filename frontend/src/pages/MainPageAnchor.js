@@ -1,115 +1,102 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Slider from "react-slick";
-import { Anchor, Modal, Tabs, Carousel as Carousel1 } from 'antd';
+import { Modal, Tabs } from 'antd';
 import '../App.css'
 import './MainPageAnchor.css'
 import './revealScroll.css'
-import ScrollToTop from "react-scroll-to-top";
-import { stagger, useAnimate, animate } from "framer-motion";
+
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import Gallery from "react-photo-gallery";
-import ResponsiveGallery from "react-responsive-gallery";
-import Carousel, { Modal as Modal1, ModalGateway } from "react-images";
-import PhotoAlbum from "react-photo-album";
-import styled from 'styled-components';
-import { Link } from 'react-router-dom';
-import * as FaIcons from 'react-icons/fa';
-import * as AiIcons from 'react-icons/ai';
-import { IconContext } from 'react-icons/lib';
-// import bg from "../../public/assets/images/img_bg_1.jpg";
-// import bg2 from "../../public/assets/images/img_bg_2.jpg";
-// import bg3 from "../../public/assets/images/img_bg_3.jpg";
-// import groom from "../../public/assets/images/groom.jpg";
-// import bride from "../../public/assets/images/bride.jpg";
-// import cp1 from "../../public/assets/images/couple-1.jpg";
-// import cp2 from "../../public/assets/images/couple-2.jpg";
-// import cp3 from "../../public/assets/images/couple-3.jpg";
+
 import { Image } from 'antd';
-import Countdown, { zeroPad } from 'react-countdown';
+import Countdown from 'react-countdown';
 import CommentSys from '../addOn/commentSys/CommentSys';
-import base, { providers, auth } from './base' //dependency injection
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import base, { providers, auth, fbDB, fb as firebase } from './base' //dependency injection
 import AOS from 'aos';
 import 'aos/dist/aos.css'; // You can also use <link> for styles
 
-const photos = [
-    { src: "../assets/images/cauhon1.jpg" },
-    { src: "../assets/images/cauhon2.jpg" },
-];
-const photos1 = [
-    {
-        src: "../assets/images/bienho1.jpg",
-        width: 4,
-        height: 3,
-    },
-    {
-        src: "../assets/images/damngo1.jpg",
-        width: 1,
-        height: 1
-    },
-    {
-        src: "../assets/images/damngo2.jpg",
-        width: 4,
-        height: 3
-    },
-    {
-        src: "../assets/images/dichoi1.jpg",
-        width: 4,
-        height: 3
-    },
-    {
-        src: "../assets/images/dichoi2.jpg",
-        width: 1,
-        height: 1
-    },
-    {
-        src: "../assets/images/HAQ_0186.jpg",
-        width: 5,
-        height: 3
-    }
-];
-const renderer = ({ days, hours, minutes, seconds, completed }) => {
-    if (completed) {
-        // Render a completed state
-        return <a>winner</a>;
-    } else {
-        // Render a countdown
-        // const days = hours / 24;
-        return <div style={{ margin: '30px' }}>
-            <span style={{ display: 'inline' }}>
-                <section class="stage">
-                    <figure class="ball bubble" style={{ padding: "22px", fontSize: '34px', backgroundColor: '#F14E95', marginRight: '22px' }}>
-                        <div>{zeroPad(days)}</div>
-                        <div style={{ fontSize: '12px' }}>Ngày</div>
-                    </figure>
-                </section><span style={{ fontSize: '33px', color: 'pink', position: 'relative', top: '-19px' }}>・</span>
-                <section class="stage">
-                    <figure class="ball bubble" style={{ padding: "22px", fontSize: '34px', backgroundColor: '#F14E95', marginRight: '22px' }}>
-                        <div>{zeroPad(hours)}</div>
-                        <div style={{ fontSize: '12px' }}>Giờ</div>
-                    </figure>
-                </section><span style={{ fontSize: '33px', color: 'pink', position: 'relative', top: '-19px' }}>・</span>
-                <section class="stage">
-                    <figure class="ball bubble" style={{ padding: "22px", fontSize: '34px', backgroundColor: '#F14E95', marginRight: '22px' }}>
-                        <div>{zeroPad(minutes)}</div>
-                        <div style={{ fontSize: '12px' }}>Phút</div>
-                    </figure>
-                </section><span style={{ fontSize: '33px', color: 'pink', position: 'relative', top: '-19px' }}>・</span>
-                <section class="stage">
-                    <figure class="ball bubble" style={{ padding: "22px", fontSize: '34px', backgroundColor: '#F14E95', marginRight: '22px' }}>
-                        <div>{zeroPad(seconds)}</div>
-                        <div style={{ fontSize: '12px' }}>Giây</div>
-                    </figure>
-                </section>
-            </span>
-        </div>;
-    }
-};
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + d.toUTCString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
 
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+var track = (xx) => {
+
+    var userStatusDatabaseRef = fbDB.ref('/tempUser/' + xx);
+
+    var isOfflineForDatabase = {
+        state: 'offline',
+        last_changed: firebase.database.ServerValue.TIMESTAMP,
+    };
+
+    var isOnlineForDatabase = {
+        state: 'online',
+        last_changed: firebase.database.ServerValue.TIMESTAMP,
+    };
+
+    fbDB.ref('.info/connected').on('value', function (snapshot) {
+        if (snapshot.val() == false) {
+            return;
+        };
+
+        userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function () {
+            userStatusDatabaseRef.set(isOnlineForDatabase);
+        });
+    });
+    checkOnline()
+    checkAccess()
+
+}
+var user = getCookie("tracking");
+if (user != "") {
+    console.log("Welcome again " + user);
+    track(user)
+} else {
+    user = Date.now().toString(16);
+    if (user != "" && user != null) {
+        console.log("Welcome new user " + user);
+        setCookie("tracking", user, 365);
+        track(user)
+    }
+}
+
+function checkOnline() {
+    fbDB.ref('/tempUser/').orderByChild('state').equalTo("online").on("value", (data => {
+        var liveVisitorCounter = data.numChildren();
+        var root = document.getElementById('liveOnlineCounter');
+        root.innerText = liveVisitorCounter;
+
+    }))
+
+
+}
+function checkAccess() {
+    fbDB.ref('/tempUser/').on("value", (data => {
+        var liveVisitorCounter = data.numChildren();
+        var root = document.getElementById('liveVisitorCounter');
+        root.innerText = liveVisitorCounter;
+
+    }))
+}
 const rendererd = ({ days, hours, minutes, seconds, completed }) => {
     if (completed) {
-        return <a>winner</a>;
+        return <span>0</span>;
     } else {
         return <span>
             {days}
@@ -117,18 +104,9 @@ const rendererd = ({ days, hours, minutes, seconds, completed }) => {
     }
 };
 
-const contentStyle = {
-    margin: 0,
-    height: '160px',
-    color: '#fff',
-    lineHeight: '160px',
-    textAlign: 'center',
-    background: '#364d79',
-};
-
 const rendererhour = ({ days, hours, minutes, seconds, completed }) => {
     if (completed) {
-        return <a>winner</a>;
+        return <span>0</span>;
     } else {
         return <span>
             {hours}
@@ -138,7 +116,7 @@ const rendererhour = ({ days, hours, minutes, seconds, completed }) => {
 
 const renderermn = ({ days, hours, minutes, seconds, completed }) => {
     if (completed) {
-        return <a>winner</a>;
+        return <span>0</span>;
     } else {
         return <span>
             {minutes}
@@ -148,7 +126,7 @@ const renderermn = ({ days, hours, minutes, seconds, completed }) => {
 
 const renderersd = ({ days, hours, minutes, seconds, completed }) => {
     if (completed) {
-        return <a>winner</a>;
+        return <span>0</span>;
     } else {
         return <span>
             {seconds}
@@ -160,8 +138,6 @@ const renderersd = ({ days, hours, minutes, seconds, completed }) => {
 
 const MainPageAnchor = () => {
     AOS.init();
-    const [currentImage, setCurrentImage] = useState(0);
-    const [viewerIsOpen, setViewerIsOpen] = useState(false);
 
     const [showElement1, setShowElement1] = useState(true);
     const [showElement2, setShowElement2] = useState(false);
@@ -211,40 +187,11 @@ const MainPageAnchor = () => {
 
     }, []);
 
-    const openLightbox = useCallback((event, { photo, index }) => {
-        setCurrentImage(index);
-        setViewerIsOpen(true);
-    }, []);
-
-    const closeLightbox = () => {
-        setCurrentImage(0);
-        setViewerIsOpen(false);
-    };
-
-    const randomNumberBetween = (min, max) => {
-        return Math.floor(Math.random() * (max - min + 1) + min);
-    };
-
-    const [scope, animate] = useAnimate();
-
-
-
     const [open, setOpen] = useState(true);
     const [openDonate, setOpenDonate] = useState(false);
     const [openMap1, setOpenMap1] = useState(false);
     const [openMap2, setOpenMap2] = useState(false);
     const [openGallery, setOpenGallery] = useState(false);
-
-
-    const scrollContainer = document.querySelectorAll(".scrollmenu");
-
-
-    (scrollContainer) && scrollContainer.forEach((el) => {
-        el.addEventListener("wheel", (evt) => {
-            evt.preventDefault();
-            el.scrollLeft += evt.deltaY * -0.01;
-        });
-    });
 
     const [openMenu, setOpenMenu] = useState(false);
 
@@ -259,8 +206,7 @@ const MainPageAnchor = () => {
                     }}
                 >
                     <Image
-                        width={'100%'}
-                        height={'100%'}
+                        width={'90%'}
                         src="../assets/images/HAQ_0261.jpg"
                     />
                     <Image
@@ -287,20 +233,21 @@ const MainPageAnchor = () => {
                     }}
                 >
                     <Image
-                        width={'50%'}
-                        height={'100%'}
+                        width={'60%'}
                         src="../assets/images/HAQ_0261.jpg"
                     />
-                    <Image
-                        width={'50%'}
-                        src="../assets/images/HAQ_0172.jpg"
-                    />
+
                     <Image
                         width={'40%'}
                         src="../assets/images/HAQ_0224.jpg"
                     />
                     <Image
-                        width={'30%'}
+                        width={'75%'}
+
+                        src="../assets/images/HAQ_0172.jpg"
+                    />
+                    <Image
+                        width={'80%'}
                         src="../assets/images/HAQ_0304.jpg"
                     /></Image.PreviewGroup>
             </>,
@@ -315,20 +262,19 @@ const MainPageAnchor = () => {
                     }}
                 >
                     <Image
-                        width={'30%'}
-                        height={'100%'}
+                        width={'40%'}
                         src="../assets/images/HAQ_0304.jpg"
                     />
                     <Image
-                        width={'50%'}
+                        width={'60%'}
                         src="../assets/images/HAQ_0565.jpg"
                     />
                     <Image
-                        width={'90%'}
+                        width={'60%'}
                         src="../assets/images/hinhdep1.jpg"
                     />
                     <Image
-                        width={'60%'}
+                        width={'40%'}
                         src="../assets/images/dichoi2.jpg"
                     /></Image.PreviewGroup>
             </>,
@@ -342,60 +288,61 @@ const MainPageAnchor = () => {
                 height: '29px',
                 borderRadius: '0px',
                 position: 'fixed',
-                zIndex: 1039,
+                zIndex: 1043,
                 boxShadow: '1px 9px 22px rgb(8 11 0 / 0.2) !important',
                 maxWidth: 'none',
                 minHeight: '27px',
                 height: '48px'
             }}>
-                <div class="container-fluid">
+                <div class="container-fluid" style={{
+                    marginRight: '3px',
+                    marginLeft: '-30px',
+                    width: '111% !important',
+                }}>
                     <div class="w-100 d-flex align-items-center justify-content-between">
                         <a class="section-title navbar-brand" href="#">H &amp; P</a>
-                        <button class="navbar-toggler rounded-0 border-0 p-0" onClick={() => setOpenMenu(!openMenu)} type="button">
-                            <i class="">
-                                <img style={{
-                                    width: '29px',
-                                    height: '27px',
-                                    marginTop: '-11px'
-                                }} class="access-icon" src="../assets/images/MenuBlack.png" alt="" />
-                            </i>
-                        </button>
+                        <div className={" nav-toggle " + (!openMenu ? "container-nav" : "change")} onClick={(x) => { setOpenMenu(!openMenu) }} type="button">
+                            <div class="bar1"></div>
+                            <div class="invis"></div>
+                            <div class="bar3"></div>
+                        </div>
                     </div>
                 </div>
             </nav>
             <div class="offcanvas-backdrop fade show" onClick={() => setOpenMenu(!openMenu)}
                 style={!openMenu ? {
-                    transition: 'opacity .3s ease-in-out',
                     opacity: 0,
                     left: '9999px',
-                    transition: 'left .3s ease-in-out',
+                    transition: 'opacity 1s ease-in-out, left .3s linear',
                 } : {
                     opacity: 0.5,
                     left: '0px',
-                    transition: 'left .3s ease-in-out',
-                    transition: 'opacity .3s ease-in-out',
+                    transition: 'opacity 1s ease-in-out, left .3s linear',
                 }}
             ></div>
             <div class="offcanvas-end offcanvas-menu"
                 style={!openMenu ? {
+                    top: '48px',
                     width: '189px',
                     height: 'fit-content',
                     position: 'fixed',
                     right: '-999px',
-                    zIndex: '2000',
+                    zIndex: '1041',
                     display: 'flex',
                     flexDirection: 'column',
                     maxWidth: '100%',
                     backgroundColor: 'rgb(255 255 255)',
                     backgroundClip: 'padding-box',
                     outline: 0,
-                    transition: 'right .3s linear',
+                    opacity: 0,
+                    transition: 'right .3s linear, opacity .3s ease-in-out',
                 } : {
+                    top: '48px',
                     width: '189px',
                     height: 'fit-content',
                     position: 'fixed',
                     right: '0px',
-                    zIndex: '2000',
+                    zIndex: '1041',
                     display: 'flex',
                     flexDirection: 'column',
                     maxWidth: '100%',
@@ -403,7 +350,7 @@ const MainPageAnchor = () => {
                     backgroundClip: 'padding-box',
                     outline: 0,
                     opacity: 1,
-                    transition: 'right .3s linear',
+                    transition: 'right .3s linear, opacity .3s ease-in-out',
                 }}
                 tabindex="-1" data-bs-scroll="true" data-bs-backdrop="true" aria-labelledby="offcanvasNavbarLabel" aria-modal="true" role="dialog">
                 <div class="offcanvas-body" style={{
@@ -411,28 +358,9 @@ const MainPageAnchor = () => {
                     paddingRight: '20px',
                 }}>
                     <ul class="navbar-nav justify-content-end flex-grow-1">
-                        <div style={{
-                            paddingRight: '27px',
-                            marginTop: '14px'
-                        }} class="offcanvas-header justify-content-end">
-                            <button type="button" class="navbar-toggler rounded-0 border-0 p-0" onClick={() => setOpenMenu(!openMenu)} aria-label="">
-                                <i class="">
-                                    <img style={{
-                                        width: '29px',
-                                        height: '27px',
-                                        marginTop: '-11px'
-                                    }} class="access-icon" src="../assets/images/MenuBlack.png" alt="" />
-                                </i>
-                            </button>
-                        </div>
-                        <li class="nav-item">
+                        {/* <li class="nav-item">
                             <a class="section-sub-title nav-link active" aria-current="page" href="#video">Video cưới</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="section-sub-title nav-link active" aria-current="page" href="#part-5-4">Album Hình Cưới</a>
-                        </li>
-
+                        </li> */}
                         <li class="nav-item">
                             <a class="section-sub-title nav-link active" aria-current="page" href="#story">The Love Story</a>
                         </li>
@@ -448,6 +376,11 @@ const MainPageAnchor = () => {
                         <li class="nav-item">
                             <a class="section-sub-title nav-link" href="#couple">Cô Dâu &amp; Chú Rể</a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="section-sub-title nav-link active" aria-current="page" href="#part-5-4">Album Hình Cưới</a>
+                        </li>
+
                         <li class="nav-item">
                             <a class="section-sub-title nav-link" href="#part-8">Lời chúc</a>
                         </li>
@@ -487,7 +420,7 @@ const MainPageAnchor = () => {
                                 <div class="main_image">
                                     <img src="../assets/images/HAQ_0224.jpg" />
                                 </div>
-                                <img class="bg-title" src="https://hungandtram.iwedding.info/templates/template135/img/main_title.png" alt="" />
+                                <img class="bg-title" src="../assets/images/main_title.png" alt="" />
                                 <div class="wrap-name pt-7 px-5 title" style={{ marginTop: '-20%' }}>
                                     Huy <small>&amp;</small> Phương
                                 </div>
@@ -526,28 +459,6 @@ const MainPageAnchor = () => {
                         </div>
                     </section>
 
-
-                </div>
-                <div
-                    id="part-3"
-                    style={{
-                        background: 'rgba(255,0,0,0.02)',
-                    }}
-                    className='wrapper'
-                >
-                    <section class="py-5 video-section section-bg-affect" id="video">
-                        <div class="container-fluid">
-                            <h2 class="section-title text-center aos-init aos-animate" data-aos="fade-up">
-                                Video cưới
-                            </h2>
-                            <h3 class="section-sub-title mb-4 text-center aos-init aos-animate" data-aos="fade-up">
-                                There is so much happiness that we shared together.
-                            </h3>
-                            <div class="ratio ratio-16x9 aos-init aos-animate" data-aos="zoom-in">
-                                <iframe width="100%" src="https://www.youtube.com/embed/wqAgycAWVd4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>
-                            </div>
-                        </div>
-                    </section>
 
                 </div>
                 <div
@@ -700,44 +611,6 @@ const MainPageAnchor = () => {
 
 
                                                 </div>
-                                                {/* <Image.PreviewGroup
-                                                    preview={{
-                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-                                                    }}
-                                                >
-                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
-                                                        <Image id='image' width={50} src={'../assets/images/img_bg_1.jpg'} />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                    </div>
-                                                </Image.PreviewGroup> */}
                                             </div>
                                         </div>
                                         <div class="timeline-card aos-init aos-animate" data-aos="fade-left">
@@ -815,44 +688,6 @@ const MainPageAnchor = () => {
                                                         </Slider>
                                                     </div>
                                                 </div>
-                                                {/* <Image.PreviewGroup
-                                                    preview={{
-                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-                                                    }}
-                                                >
-                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
-                                                        <Image id='image' width={50} src={'../assets/images/cauhon2.jpg'} />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                    </div>
-                                                </Image.PreviewGroup> */}
                                             </div>
                                         </div>
                                         <div class="timeline-card aos-init aos-animate" data-aos="fade-right">
@@ -930,46 +765,6 @@ const MainPageAnchor = () => {
                                                         </Slider>
                                                     </div>
                                                 </div>
-                                                {/* <img src={'../assets/images/HAQ_0261.jpg'} alt="" />
-                                                </div> */}
-                                                {/* <Image.PreviewGroup
-                                                    preview={{
-                                                        onChange: (current, prev) => console.log(`current index: ${current}, prev index: ${prev}`),
-                                                    }}
-                                                >
-                                                    <div style={{ marginTop: '-17px' }} className='scrollmenu' id="style-3">
-                                                        <Image id='image' width={50} src={'../assets/images/img_bg_1.jpg'} />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                        <Image id='image' width={50} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" />
-                                                        <Image id='image'
-                                                            width={50}
-                                                            src="https://gw.alipayobjects.com/zos/antfincdn/aPkFc8Sj7n/method-draw-image.svg"
-                                                        />
-                                                    </div>
-                                                </Image.PreviewGroup> */}
                                             </div>
                                         </div>
                                     </div>
@@ -981,8 +776,9 @@ const MainPageAnchor = () => {
                 <div
                     id="part-5-1"
                     style={{
-                        // height: '170vh',
                         background: 'rgba(255,0,0,0.02)',
+                        borderBottom: '1px solid #ebebeb',
+                        paddingBottom: '16px'
                     }}
                     className='wrapper'
                 >
@@ -1017,7 +813,6 @@ const MainPageAnchor = () => {
                 <div
                     id="part-5-2"
                     style={{
-                        // height: '170vh',
                         background: 'rgba(255,0,0,0.02)',
                     }}
                     className='wrapper'
@@ -1064,14 +859,7 @@ const MainPageAnchor = () => {
                                 <div id="fh5co-event" class="fh5co-bg" >
                                     <div class="container">
                                         <div class="row" style={{ paddingTop: '30px' }}>
-                                            {/* <iframe
-                                                // width="450"
-                                                // height="250"
-                                                frameborder="0" style={{ border: '0' }}
-                                                referrerpolicy="no-referrer-when-downgrade"
-                                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAI9kPkskayYti5ttrZL_UfBlL3OkMEbvs&q=Eiffel+Tower,Paris+France"
-                                                allowfullscreen>
-                                            </iframe> */}
+
                                             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1131.0919335055453!2d106.82789927843949!3d11.038189467964758!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3174dd5f8a50e57f%3A0x41b0350eff395f3e!2zTmjDs20gdHLhursgVGh1IE5ndXnhu4d0!5e0!3m2!1svi!2s!4v1722595312266!5m2!1svi!2s" width="600" height="450" style={{ border: '0' }} allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                         </div>
 
@@ -1114,14 +902,7 @@ const MainPageAnchor = () => {
                                 <div id="fh5co-event" class="fh5co-bg" >
                                     <div class="container">
                                         <div class="row" style={{ paddingTop: '30px' }}>
-                                            {/* <iframe
-                                                width="450"
-                                                height="250"
-                                                frameborder="0" style={{ border: '0' }}
-                                                referrerpolicy="no-referrer-when-downgrade"
-                                                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAI9kPkskayYti5ttrZL_UfBlL3OkMEbvs&q=Eiffel+Tower,Paris+France"
-                                                allowfullscreen>
-                                            </iframe> */}
+
                                             <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d967.9434481121325!2d107.99724697520953!3d13.972065884429554!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x316c1f7fb7bfaaa3%3A0x726024d0dad57943!2zMTEwIFF1eeG6v3QgVGnhur9uLCBQLiBEacOqbiBI4buTbmcsIFRow6BuaCBwaOG7kSBQbGVpa3UsIEdpYSBMYWkgNjAwMDAwLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1722595189308!5m2!1svi!2s" width="600" height="450" style={{ border: '0' }} allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                         </div>
 
@@ -1136,6 +917,7 @@ const MainPageAnchor = () => {
                     id="part-5-3"
                     style={{
                         background: 'rgba(255,0,0,0.02)',
+                        borderBottom: '1px solid #ebebeb',
                     }}
                     className='wrapper'
                 >
@@ -1190,11 +972,14 @@ const MainPageAnchor = () => {
                     id="part-5-4"
                     style={{
                         background: 'rgba(255,0,0,0.02)',
+                        borderBottom: '1px solid #ebebeb',
+                        paddingBottom: '16px',
+                        paddingTop: '20px'
                     }}
                     className='wrapper'
                 >
 
-                    <h2 class="section-title text-center aos-init aos-animate" data-aos="zoom-in-up">
+                    <h2 style={{ marginBottom: '20px' }} class="section-title text-center aos-init aos-animate" data-aos="zoom-in-up">
                         Album Hình Cưới
                     </h2>
                     <Image.PreviewGroup
@@ -1240,23 +1025,7 @@ const MainPageAnchor = () => {
                             src="../assets/images/HAQ_0249.jpg"
                         />
                     </Image.PreviewGroup>
-                    {/* <Gallery photos={photos1} id="#gallery"
-                        onClick={openLightbox}
-                    />
-                    <ModalGateway>
-                        {viewerIsOpen ? (
-                            <Modal1 onClose={closeLightbox}>
-                                <Carousel
-                                    currentIndex={currentImage}
-                                    views={photos1.map(x => ({
-                                        ...x,
-                                        srcset: x.srcSet,
-                                        caption: x.title,
-                                    }))}
-                                />
-                            </Modal1>
-                        ) : null}
-                    </ModalGateway> */}
+
                     <div class="text-center aos-init aos-animate" data-aos="fade-up">
                         <a style={{ color: 'white', padding: '10px !important', marginBottom: '50px !important' }} onClick={() => setOpenGallery(true)} id="btn-see-more-gallery" class="btn btn-secondary btn-see-more-gallery">
                             <span> Tất cả hình ảnh </span>
@@ -1355,12 +1124,13 @@ const MainPageAnchor = () => {
                     id="part-7"
                     style={{
 
-                        background: 'rgba(255,0,0,0.02)',
+                        background: 'rgb(255 250 250)',
                     }}
                     className='wrapper'
                 >
-                    <div id="fh5co-event" class="fh5co-bg" style={{ backgroundImage: `url(../assets/images/img_bg_1.jpg)`, height: '100%', paddingTop: '50px', paddingBottom: '20px' }} >
-                        <div class="overlay-dark"></div>
+                    <div id="fh5co-event" class="fh5co-bg"
+                        style={{ height: '100%', paddingTop: '50px', paddingBottom: '20px' }}
+                    >
                         <div class="container">
                             <div style={{ marginBottom: '0', paddingLeft: '0px', paddingRight: '0px' }} class="col-md-8 col-md-offset-2 text-center fh5co-heading animate-box">
                                 <CommentSys base={base} auth={auth} providers={providers} />
@@ -1459,6 +1229,22 @@ const MainPageAnchor = () => {
                 </ul>
 
             </div>
+            <div id='counter'>
+                <img style={{
+                    height: '12px',
+                    width: 'auto',
+                    marginTop: '-1px',
+                }} class="access-icon" src="../assets/images/person-295.png" alt="" />&nbsp;
+                <p id='liveVisitorCounter'></p> &nbsp;
+
+                <img style={{
+                    height: '16px',
+                    width: 'auto',
+                    marginTop: '-2px',
+                }} class="access-icon" src="../assets/images/Signal-icon.png" alt="" />
+                <p id='liveOnlineCounter'> </p> &nbsp;
+            </div>
+
         </>
     )
 };

@@ -9,13 +9,21 @@ const app = firebase.initializeApp({
     // projectId: "xxx",
     // storageBucket: "",
     // messagingSenderId: "xxx",
-    apiKey: "AIzaSyCQf3Mz3TiM7SyPw9FubwRX8JbTwtwPRKQ",
-    authDomain: "thiepcuoi-a8d6e.firebaseapp.com",
-    databaseURL: "https://thiepcuoi-a8d6e-default-rtdb.firebaseio.com",
-    projectId: "thiepcuoi-a8d6e",
-    storageBucket: "thiepcuoi-a8d6e.appspot.com",
-    messagingSenderId: "520809800370",
-    appId: "1:520809800370:web:23cb4aeaba9ec11a6f5fab"
+    // apiKey: "AIzaSyCQf3Mz3TiM7SyPw9FubwRX8JbTwtwPRKQ",
+    // authDomain: "thiepcuoi-a8d6e.firebaseapp.com",
+    // databaseURL: "https://thiepcuoi-a8d6e-default-rtdb.firebaseio.com",
+    // projectId: "thiepcuoi-a8d6e",
+    // storageBucket: "thiepcuoi-a8d6e.appspot.com",
+    // messagingSenderId: "520809800370",
+    // appId: "1:520809800370:web:23cb4aeaba9ec11a6f5fab"
+
+    apiKey: "AIzaSyB2RzwIcKX5mHAmGXcqJnAEhAiNyQb3rL4",
+  authDomain: "huyphuongwedding.firebaseapp.com",
+  databaseURL: "https://thiepcuoi-a8d6e-default-rtdb.firebaseio.com",
+  projectId: "thiepcuoi-a8d6e",
+  storageBucket: "thiepcuoi-a8d6e.appspot.com",
+  messagingSenderId: "520809800370",
+  appId: "1:520809800370:web:e20654bbfe36bd756f5fab"
 })
 // const db = firestore.data();
 // console.log(db);
@@ -26,4 +34,6 @@ export const providers = {
     'google': new firebase.auth.GoogleAuthProvider()
 }
 export const auth = firebase.auth()
+export const fbDB = app.database()
+export const fb = firebase
 export default base

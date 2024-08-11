@@ -11,7 +11,7 @@ class CommentSys extends Component {
       comments: {},
       isLoggedIn: false,
       user: {},
-      isAnonymous: false
+      isAnonymous: true
     }
 
     this.refComments = this.props.base.syncState('comments', {
@@ -62,13 +62,13 @@ class CommentSys extends Component {
         var token = result.credential.accessToken;
         // The signed-in user info.
         var user = result.user;
-        if (user) {
-          this.setState({
-            isLoggedIn: true, user,
-            isAnonymous: false,
+        // if (user) {
+        //   this.setState({
+        //     isLoggedIn: true, user,
+        //     isAnonymous: false,
 
-          });
-        }
+        //   });
+        // }
       });
 
     } else {
@@ -94,8 +94,13 @@ class CommentSys extends Component {
   }
 
   logout() {
-    if (window.confirm("Do you really want to leave?")) {
+    if (window.confirm("bạn có muốn đăng xuất?")) {
       this.props.auth.signOut()
+      this.setState({
+        isAnonymous: true,
+        user: {
+        }
+      })
     }
   }
 
@@ -105,12 +110,23 @@ class CommentSys extends Component {
         paddingRight: '0px',
         paddingLeft: '0px'
       }}>
-        <h2 style={{ textAlign: 'center' }}>Lời chúc mừng!!!{this.state.isLoggedIn && <button style={{ marginLeft: 50 }} onClick={() => this.logout()} className="btn btn-link">Đăng xuất</button>}</h2>
-        <div style={{ textAlign: 'center' }} >
-          {!this.state.isLoggedIn && <div className="alert alert-info">
-            <button className="btn btn-info" onClick={() => this.auth('facebook')}>Đăng nhập bằng Facebook</button>
-            <button style={{ marginLeft: 10 }} className="btn btn-info" onClick={() => this.auth('google')}>Đăng nhập bằng Google</button>
-            <button style={{ marginLeft: 10 }} className="btn btn-info" onClick={() => this.authAnonymous()}>Người ẩn danh</button>
+        <h2 class="section-title text-center aos-init aos-animate" data-aos="zoom-in-up" style={{marginBottom: '20px', color: 'black'}}>Đôi lời nhắn gửi!!!
+         
+          </h2>
+        <div className="alert alert-info" style={{ textAlign: 'center' }} >
+        {this.state.isLoggedIn &&
+          <div style={{
+            fontSize: 'small',
+            fontFamily: 'DFVNBoris',
+          }}>Chào bạn, {this.state.user?.displayName}  <button style={{ marginLeft: 50 }} onClick={() => this.logout()} className="btn btn-link">Đăng xuất</button></div>}
+          {!this.state.isLoggedIn && <div >
+            Đăng nhập bằng&nbsp;
+            <img onClick={() => this.auth('facebook')} class="access-icon" src="../assets/images/facebook-logo-2867.png" alt="" />
+            &nbsp;<img onClick={() => this.auth('google')} class="access-icon" src="../assets/images/google.png" alt="" />
+
+            {/* <button className="btn btn-info" onClick={() => this.auth('facebook')}>Đăng nhập bằng Facebook</button> */}
+            {/* <button style={{ marginLeft: 10 }} className="btn btn-info" onClick={() => this.auth('google')}>Đăng nhập bằng Google</button> */}
+            {/* <button style={{ marginLeft: 10 }} className="btn btn-info" onClick={() => this.authAnonymous()}>Người ẩn danh</button> */}
           </div>}
           {(this.state.isLoggedIn || this.state.isAnonymous) && <NewComment isAnonymous={this.state.isAnonymous} postNewComment={this.postNewComment} />}
         </div>

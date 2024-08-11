@@ -331,8 +331,29 @@ align-content: center !important;
  margin: -27px;
  margin-left: 0px;
  display: flex;
- padding: 5px;
+ padding: 0px;
+ border: 5px solid snow;
+
 }
+
+.ant-tabs-tabpane img{
+  /* width: revert-layer !important;
+  max-width: unset !important;
+  height: unset !important; */
+  border-radius: 11%;
+  margin: -22px;
+  margin-left: 0px;
+  display: unset;
+  padding: 5px;
+  border: 5px solid white;
+ }
+
+ .ant-modal-content {
+  padding: 5px 5px !important;
+ }
+ .ant-tabs-tabpane{
+margin-top: 20px;
+ }
 @media only screen and (min-width: 372px) and (max-width: 479px){
     .heart {
       margin-top: 192px;
